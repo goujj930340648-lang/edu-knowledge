@@ -153,7 +153,7 @@ def persist_document_import(
     asset_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """根据导入图终态写入 ``knowledge_document`` / ``knowledge_chunk``。"""
-    from processor.vector_indexer import _content_fingerprint
+    from processor.vector_indexer.utils import content_fingerprint
     from schema.edu_content import EduContent
 
     chunks_raw = graph_state.get("chunks") or []
@@ -175,7 +175,8 @@ def persist_document_import(
             edu = EduContent.model_validate(raw_ec)
         except Exception:
             continue
-        chash = _content_fingerprint(edu)
+        cid = str(ch.get("chunk_id") or "").strip()
+        chash = cid if cid else content_fingerprint(edu)
         heading = ch.get("heading_path") or []
         section_path = [str(x) for x in heading] if isinstance(heading, list) else []
         chunk_docs.append(

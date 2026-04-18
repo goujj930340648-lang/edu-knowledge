@@ -211,8 +211,11 @@ def should_use_local_bge_embedding() -> bool:
         return True
     p = os.environ.get("BGE_M3_PATH", "").strip()
     if p:
-        if Path(p).exists():
-            return True
+        try:
+            if Path(p).is_dir():
+                return True
+        except OSError:
+            pass
     return False
 
 

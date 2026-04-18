@@ -40,14 +40,14 @@ def vector_indexer_node(state: ImportGraphState) -> dict[str, Any]:
 
     Environment Variables (legacy mode):
         MILVUS_COLLECTION: Collection name (default: edu_knowledge_vectors_v1)
-        EMBEDDING_BACKEND: Embedding service (default: openai compatible)
+        EMBEDDING_BACKEND: 未设置且 ``BGE_M3_PATH`` 为已存在目录时默认本地 BGE-M3，否则 OpenAI 兼容 API
 
     Environment Variables (v2 mode):
         MILVUS_RAG_MODE: Set to "v2" for dual collection mode
         MILVUS_NAMES_COLLECTION: Names collection (default: edu_knowledge_item_names_v1)
         MILVUS_CHUNKS_COLLECTION: Chunks collection (default: edu_knowledge_chunks_v1)
         BGE_M3_PATH: Path to local BGE-M3 model (required for v2)
-        EMBEDDING_BACKEND: Set to "local_bge_m3" or "local"
+        EMBEDDING_BACKEND: 可显式设为 ``local_bge_m3`` / ``local``；或与 ``BGE_M3_PATH`` 二选一自动本地
         MILVUS_SKIP_DEDUP: Set to "1" to skip deduplication
 
     Args:
@@ -83,13 +83,18 @@ def vector_indexer_node(state: ImportGraphState) -> dict[str, Any]:
     # Step 2: Create VectorIndexerConfig from environment
     config = VectorIndexerConfig.from_env()
 
-    # Step 3: Extract and validate EduContent documents
+    # Step 3: Extract and validate EduContent documents（与 ChunkDraft.chunk_id 对齐）
     documents: list[EduContent] = []
+    chunk_ids: list[str] = []
     for ch in chunks:
         raw = ch.get("edu_content") if isinstance(ch, dict) else None
         if not raw:
             continue
         documents.append(EduContent.model_validate(raw))
+        cid = ""
+        if isinstance(ch, dict):
+            cid = str(ch.get("chunk_id") or "").strip()
+        chunk_ids.append(cid)
 
     if not documents:
         return merge_upstream_lists(
@@ -97,11 +102,11 @@ def vector_indexer_node(state: ImportGraphState) -> dict[str, Any]:
             {"errors": ["提取出的 EduContent 对象为空"], "is_success": False},
         )
 
-    # Prepare flat rows with content fingerprints
+    # Prepare flat rows：优先用抽取器 chunk_id，否则回退内容指纹
     flat_rows: list[dict[str, Any]] = []
-    for doc in documents:
+    for doc, cid in zip(documents, chunk_ids):
         flat = doc.to_flat_dict()
-        flat["content_hash"] = content_fingerprint(doc)
+        flat["content_hash"] = cid if cid else content_fingerprint(doc)
         flat_rows.append(flat)
 
     # Add document type if specified

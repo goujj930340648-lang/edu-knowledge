@@ -7,14 +7,18 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# 固定为项目根目录的 .env，避免「从子目录 / IDE 以非仓库根为工作目录启动」时读不到 CWD 下的 .env
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_PROJECT_ROOT / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )

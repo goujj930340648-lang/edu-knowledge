@@ -72,9 +72,9 @@ def _create_chunk_edu(
         doc_chunk=doc_chunk,
     )
 
-    # [修改] 直接使用确定存在的 original_filename，消除类型警告
+    # 文件名 + 切片序号 + 文本：同文档内重复段、跨文档同内容均可区分
     file_name = str(state.get("original_filename", "unknown_doc"))
-    combined_str = f"{file_name}_{chunk_text}"
+    combined_str = f"{file_name}_{order}_{chunk_text}"
     chunk_id = hashlib.sha256(combined_str.encode("utf-8")).hexdigest()
 
     return {

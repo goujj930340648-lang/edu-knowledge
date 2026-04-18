@@ -8,7 +8,19 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
+
+
+def _env_local_bge_path_ok() -> bool:
+    """若 BGE_M3_PATH 指向已存在目录，则可用本地 BGE-M3（与 env.example 说明一致）。"""
+    raw = (os.environ.get("BGE_M3_PATH") or "").strip()
+    if not raw:
+        return False
+    try:
+        return Path(raw).is_dir()
+    except OSError:
+        return False
 
 
 @dataclass(frozen=True)
@@ -48,7 +60,7 @@ class VectorIndexerConfig:
             ITEM_NAME_COLLECTION: Alternative name for MILVUS_NAMES_COLLECTION (deprecated)
             CHUNKS_COLLECTION: Alternative name for MILVUS_CHUNKS_COLLECTION (deprecated)
             MILVUS_SKIP_DEDUP: Skip deduplication ('1', 'true', 'yes' to enable, default: false)
-            EMBEDDING_BACKEND: Embedding backend (default: 'openai')
+            EMBEDDING_BACKEND: 显式指定后端；留空时若 ``BGE_M3_PATH`` 为已存在目录则默认 ``local_bge_m3``，否则 ``openai``
 
         Returns:
             VectorIndexerConfig: Configuration instance
@@ -89,10 +101,12 @@ class VectorIndexerConfig:
         skip_dedup_str = os.environ.get("MILVUS_SKIP_DEDUP", "").strip().lower()
         skip_dedup = skip_dedup_str in ("1", "true", "yes", "on")
 
-        # Embedding backend
-        embedding_backend = os.environ.get("EMBEDDING_BACKEND", "openai").strip()
+        # Embedding backend：显式优先；未设置时与 env.example 对齐——有本地模型目录则走本地
+        embedding_backend = os.environ.get("EMBEDDING_BACKEND", "").strip()
         if not embedding_backend:
-            embedding_backend = "openai"
+            embedding_backend = (
+                "local_bge_m3" if _env_local_bge_path_ok() else "openai"
+            )
 
         return cls(
             rag_mode=rag_mode,  # type: ignore[arg-type]

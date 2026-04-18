@@ -29,6 +29,7 @@ class TestVectorIndexerConfig:
             "CHUNKS_COLLECTION",
             "MILVUS_SKIP_DEDUP",
             "EMBEDDING_BACKEND",
+            "BGE_M3_PATH",
         ]:
             monkeypatch.delenv(key, raising=False)
 
@@ -39,6 +40,48 @@ class TestVectorIndexerConfig:
         assert config.v2_names_collection == "edu_knowledge_item_names_v1"
         assert config.v2_chunks_collection == "edu_knowledge_chunks_v1"
         assert config.skip_dedup is False
+        assert config.embedding_backend == "openai"
+
+    def test_auto_local_bge_when_bge_m3_path_is_dir(self, monkeypatch, tmp_path):
+        """未设置 EMBEDDING_BACKEND 且 BGE_M3_PATH 为已存在目录时默认本地 BGE-M3。"""
+        for key in [
+            "MILVUS_RAG_MODE",
+            "MILVUS_COLLECTION",
+            "MILVUS_NAMES_COLLECTION",
+            "MILVUS_CHUNKS_COLLECTION",
+            "ITEM_NAME_COLLECTION",
+            "CHUNKS_COLLECTION",
+            "MILVUS_SKIP_DEDUP",
+            "EMBEDDING_BACKEND",
+        ]:
+            monkeypatch.delenv(key, raising=False)
+        fake_model_dir = tmp_path / "bge-m3"
+        fake_model_dir.mkdir()
+        monkeypatch.setenv("BGE_M3_PATH", str(fake_model_dir))
+
+        config = VectorIndexerConfig.from_env()
+
+        assert config.embedding_backend == "local_bge_m3"
+
+    def test_explicit_openai_overrides_local_path(self, monkeypatch, tmp_path):
+        """显式 EMBEDDING_BACKEND=openai 时不因 BGE_M3_PATH 改成本地。"""
+        for key in [
+            "MILVUS_RAG_MODE",
+            "MILVUS_COLLECTION",
+            "MILVUS_NAMES_COLLECTION",
+            "MILVUS_CHUNKS_COLLECTION",
+            "ITEM_NAME_COLLECTION",
+            "CHUNKS_COLLECTION",
+            "MILVUS_SKIP_DEDUP",
+        ]:
+            monkeypatch.delenv(key, raising=False)
+        fake_model_dir = tmp_path / "bge-m3"
+        fake_model_dir.mkdir()
+        monkeypatch.setenv("BGE_M3_PATH", str(fake_model_dir))
+        monkeypatch.setenv("EMBEDDING_BACKEND", "openai")
+
+        config = VectorIndexerConfig.from_env()
+
         assert config.embedding_backend == "openai"
 
     def test_legacy_mode_config(self, monkeypatch):

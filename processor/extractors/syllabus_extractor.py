@@ -18,7 +18,7 @@ from schema.edu_content import (
 from schema.metadata import DocumentClass as DocumentClassEnum
 
 from processor.import_state import ChunkDraft, ImportGraphState, LectureMetadata
-from processor.lecture_extractor import _plain_title
+from processor.extractors.lecture_extractor import _plain_title
 from utils.client import get_llm_client
 from utils.document_split import split_markdown_document
 
@@ -177,8 +177,7 @@ def syllabus_extractor_node(state: ImportGraphState) -> dict[str, Any]:
         if not content:
             continue
 
-        # [新增] 计算联合哈希作为唯一的 chunk_id
-        combined_str = f"{file_name}_{content}"
+        combined_str = f"{file_name}_{order}_{content}"
         chunk_id = hashlib.sha256(combined_str.encode("utf-8")).hexdigest()
 
         tl = (ch.get("title") or "").strip() or file_title
