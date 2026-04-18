@@ -15,8 +15,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from processor.vector_indexer import (
-    vector_indexer_node,
+from processor.vector_indexer import vector_indexer_node
+from processor.vector_indexer.utils import (
     content_fingerprint,
     item_fingerprint,
     catalog_display_name,
