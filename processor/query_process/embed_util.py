@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from utils.client import get_embedding_client
-from utils.local_bge_client import get_local_bge_client, should_use_local_bge_embedding
+from processor.vector_indexer.embedding_service import (
+    EmbeddingError,
+    EmbeddingResult,
+    get_embedding_service,
+)
 from utils.milvus_search_edu import rag_mode
 
 
@@ -16,15 +19,29 @@ def embed_query_for_chunks(text: str) -> tuple[list[float], dict[int, float] | N
     t = (text or "").strip()
     if not t:
         raise ValueError("empty query text")
-    if rag_mode() == "v2" and should_use_local_bge_embedding():
-        bge = get_local_bge_client()
-        dense, sparse = bge.embed_documents_dense_sparse([t])
-        return dense[0], sparse[0]
-    if should_use_local_bge_embedding():
-        dense = get_local_bge_client().embed_documents_dense_only([t])
-        return dense[0], None
-    emb = get_embedding_client().embed_documents([t])
-    return emb[0], None
+
+    service = get_embedding_service()
+
+    if rag_mode() == "v2":
+        # v2 mode: try dense + sparse
+        dense_result, sparse_result = service.embed_dense_sparse([t])
+
+        if isinstance(dense_result, EmbeddingError):
+            raise RuntimeError(f"Dense embedding failed: {dense_result.message}")
+
+        if isinstance(sparse_result, EmbeddingError):
+            # Sparse not supported or failed, fall back to dense only
+            return dense_result.embeddings[0], None
+
+        return dense_result.embeddings[0], sparse_result.embeddings[0]
+
+    # Legacy mode: dense only
+    result = service.embed_documents([t])
+
+    if isinstance(result, EmbeddingError):
+        raise RuntimeError(f"Embedding failed: {result.message}")
+
+    return result.embeddings[0], None
 
 
 __all__ = ["embed_query_for_chunks"]

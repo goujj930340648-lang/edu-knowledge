@@ -119,15 +119,6 @@ class EmbeddingClient:
         return out
 
 
-@lru_cache(maxsize=1)
-def get_embedding_client() -> EmbeddingClient:
-    return EmbeddingClient()
-
-
-def reset_embedding_client_cache() -> None:
-    get_embedding_client.cache_clear()
-
-
 def maybe_strip_proxy_for_milvus() -> None:
     """
     若设置 MILVUS_DISABLE_PROXY=1/true，则移除常见 *_PROXY 环境变量。
@@ -239,8 +230,6 @@ __all__ = [
     "get_llm_client",
     "reset_llm_client_cache",
     "EmbeddingClient",
-    "get_embedding_client",
-    "reset_embedding_client_cache",
     "MilvusIndexerClient",
     "get_milvus_client",
     "reset_milvus_client_cache",

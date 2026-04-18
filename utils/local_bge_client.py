@@ -196,15 +196,6 @@ class LocalBGEClient:
         return self.embed_items_dense(texts)
 
 
-@lru_cache(maxsize=1)
-def get_local_bge_client() -> LocalBGEClient:
-    return LocalBGEClient()
-
-
-def reset_local_bge_client_cache() -> None:
-    get_local_bge_client.cache_clear()
-
-
 def should_use_local_bge_embedding() -> bool:
     """
     是否用本地 ``BGEM3FlagModel`` 做向量（不调 OpenAI Embedding API）。
@@ -227,7 +218,5 @@ def should_use_local_bge_embedding() -> bool:
 
 __all__ = [
     "LocalBGEClient",
-    "get_local_bge_client",
-    "reset_local_bge_client_cache",
     "should_use_local_bge_embedding",
 ]

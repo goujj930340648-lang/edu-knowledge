@@ -27,8 +27,94 @@ def mock_env_vars(monkeypatch):
 
 
 @pytest.fixture
+def mock_embedding_service():
+    """Mock embedding service that returns EmbeddingResult."""
+    from processor.vector_indexer.embedding_service import EmbeddingResult, EmbeddingBackend
+
+    mock_service = MagicMock()
+
+    def embed_documents_func(texts):
+        # Return EmbeddingResult with the same number of vectors as input texts
+        return EmbeddingResult(
+            embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            backend=EmbeddingBackend.OPENAI,
+            processing_time_ms=100.0,
+        )
+
+    def embed_dense_only_func(texts):
+        # Return EmbeddingResult with the same number of vectors as input texts
+        return EmbeddingResult(
+            embeddings=[[0.4, 0.5, 0.6] for _ in range(len(texts))],
+            backend=EmbeddingBackend.OPENAI,
+            processing_time_ms=100.0,
+        )
+
+    def embed_dense_sparse_func(texts):
+        # Return tuple of EmbeddingResult for dense and sparse
+        dense = EmbeddingResult(
+            embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            backend=EmbeddingBackend.BGE_M3,
+            processing_time_ms=150.0,
+        )
+        sparse = EmbeddingResult(
+            embeddings=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
+            backend=EmbeddingBackend.BGE_M3,
+            processing_time_ms=150.0,
+        )
+        return (dense, sparse)
+
+    mock_service.embed_documents.side_effect = embed_documents_func
+    mock_service.embed_dense_only.side_effect = embed_dense_only_func
+    mock_service.embed_dense_sparse.side_effect = embed_dense_sparse_func
+    return mock_service
+
+
+@pytest.fixture
+def mock_bge_service():
+    """Mock BGE-M3 embedding service that returns EmbeddingResult."""
+    from processor.vector_indexer.embedding_service import EmbeddingResult, EmbeddingBackend
+
+    mock_service = MagicMock()
+
+    def embed_documents_func(texts):
+        # Return EmbeddingResult with the same number of vectors as input texts
+        return EmbeddingResult(
+            embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            backend=EmbeddingBackend.BGE_M3,
+            processing_time_ms=100.0,
+        )
+
+    def embed_dense_only_func(texts):
+        # Return EmbeddingResult with the same number of vectors as input texts
+        return EmbeddingResult(
+            embeddings=[[0.4, 0.5, 0.6] for _ in range(len(texts))],
+            backend=EmbeddingBackend.BGE_M3,
+            processing_time_ms=100.0,
+        )
+
+    def embed_dense_sparse_func(texts):
+        # Return tuple of EmbeddingResult for dense and sparse
+        dense = EmbeddingResult(
+            embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            backend=EmbeddingBackend.BGE_M3,
+            processing_time_ms=150.0,
+        )
+        sparse = EmbeddingResult(
+            embeddings=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
+            backend=EmbeddingBackend.BGE_M3,
+            processing_time_ms=150.0,
+        )
+        return (dense, sparse)
+
+    mock_service.embed_documents.side_effect = embed_documents_func
+    mock_service.embed_dense_only.side_effect = embed_dense_only_func
+    mock_service.embed_dense_sparse.side_effect = embed_dense_sparse_func
+    return mock_service
+
+
+@pytest.fixture
 def mock_embedding_client():
-    """Mock embedding client."""
+    """Mock embedding client (deprecated - use mock_embedding_service)."""
     mock_client = MagicMock()
 
     def embed_documents_func(texts):
@@ -41,7 +127,7 @@ def mock_embedding_client():
 
 @pytest.fixture
 def mock_local_bge_client():
-    """Mock local BGE client."""
+    """Mock local BGE client (deprecated - use mock_bge_service)."""
     mock_client = MagicMock()
 
     def embed_documents_dense_only_func(texts):

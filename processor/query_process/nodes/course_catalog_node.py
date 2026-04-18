@@ -13,7 +13,7 @@ from prompts.query_prompt import CATALOG_EXTRACT_SYSTEM, CATALOG_EXTRACT_USER
 from processor.query_process.base import BaseNode
 from processor.query_state import QueryGraphState
 from utils.client import get_llm_client
-from utils.local_bge_client import get_local_bge_client, should_use_local_bge_embedding
+from utils.local_bge_client import should_use_local_bge_embedding
 from utils.milvus_search_edu import dense_search_names_batch
 
 
@@ -95,8 +95,19 @@ class CourseCatalogNode(BaseNode):
 
     def _align_names(self, entity_names: list[str]) -> tuple[list[str], list[str]]:
         try:
-            bge = get_local_bge_client()
-            vecs = bge.embed_items_dense(entity_names)
+            from processor.vector_indexer.embedding_service import (
+                EmbeddingError,
+                get_embedding_service,
+            )
+
+            service = get_embedding_service()
+            result = service.embed_dense_only(entity_names)
+
+            if isinstance(result, EmbeddingError):
+                self.logger.warning("名称向量化失败: %s", result.message)
+                return [], []
+
+            vecs = result.embeddings
         except Exception as e:
             self.logger.warning("名称向量化失败: %s", e)
             return [], []

@@ -15,6 +15,11 @@ from schema.edu_content import EduContent
 
 from processor.import_state import ImportGraphState
 from processor.vector_indexer.config import VectorIndexerConfig
+from processor.vector_indexer.embedding_service import (
+    EmbeddingError,
+    EmbeddingResult,
+    get_embedding_service,
+)
 from processor.vector_indexer.utils import (
     MILVUS_VARCHAR_CONTENT_MAX,
     batch_query_field,
@@ -26,8 +31,7 @@ from processor.vector_indexer.utils import (
     sanitize_milvus_row,
     truncate_content_field,
 )
-from utils.client import get_embedding_client, get_milvus_client
-from utils.local_bge_client import get_local_bge_client, should_use_local_bge_embedding
+from utils.client import get_milvus_client
 
 
 def _vector_indexer_legacy(
@@ -68,10 +72,16 @@ def _vector_indexer_legacy(
 
     texts = [d.content for d in to_embed_docs]
     try:
-        if should_use_local_bge_embedding():
-            vectors = get_local_bge_client().embed_documents_dense_only(texts)
-        else:
-            vectors = get_embedding_client().embed_documents(texts)
+        service = get_embedding_service()
+        result = service.embed_documents(texts)
+
+        if isinstance(result, EmbeddingError):
+            return {
+                "errors": [f"Embedding 失败: {result.message}"],
+                "is_success": False,
+            }
+
+        vectors = result.embeddings
     except Exception as e:
         return {"errors": [f"Embedding 失败: {e}"], "is_success": False}
 
@@ -131,16 +141,10 @@ def _vector_indexer_v2(
     chunks_collection: str,
     skip_dedup: bool,
 ) -> dict[str, Any]:
-    if not should_use_local_bge_embedding():
-        return {
-            "errors": [
-                "MILVUS_RAG_MODE=v2 需要本地 BGE-M3：请设置 EMBEDDING_BACKEND=local_bge_m3（或 local/offline），"
-                "或配置可用的 BGE_M3_PATH，并安装 FlagEmbedding / torch（见 utils/local_bge_client.py）"
-            ],
-            "is_success": False,
-        }
+    service = get_embedding_service()
 
-    bge = get_local_bge_client()
+    # Check if service supports dense+sparse (BGE-M3)
+    # We'll try to use it and handle errors if it doesn't support sparse
     milvus = get_milvus_client()
     warnings: list[str] = []
 
@@ -166,7 +170,12 @@ def _vector_indexer_v2(
         if new_items:
             texts = [r["item_name"] for r in new_items]
             try:
-                name_vecs = bge.embed_items_dense(texts)
+                result = service.embed_dense_only(texts)
+
+                if isinstance(result, EmbeddingError):
+                    return {"errors": [f"名称表 Embedding 失败: {result.message}"], "is_success": False}
+
+                name_vecs = result.embeddings
             except Exception as e:
                 return {"errors": [f"名称表 Embedding 失败: {e}"], "is_success": False}
             if len(name_vecs) != len(new_items):
@@ -225,9 +234,18 @@ def _vector_indexer_v2(
 
     texts = [d.content for d in to_embed_docs]
     try:
-        dense_vecs, sparse_vecs = bge.embed_documents_dense_sparse(texts)
+        dense_result, sparse_result = service.embed_dense_sparse(texts)
+
+        if isinstance(dense_result, EmbeddingError):
+            return {"errors": [f"稠密向量生成失败: {dense_result.message}"], "is_success": False}
+
+        if isinstance(sparse_result, EmbeddingError):
+            return {"errors": [f"稀疏向量生成失败: {sparse_result.message}"], "is_success": False}
+
+        dense_vecs = dense_result.embeddings
+        sparse_vecs = sparse_result.embeddings
     except Exception as e:
-        return {"errors": [f"BGE-M3 双向量失败: {e}"], "is_success": False}
+        return {"errors": [f"双向量生成失败: {e}"], "is_success": False}
 
     if len(dense_vecs) != len(to_embed_rows) or len(sparse_vecs) != len(to_embed_rows):
         return {
