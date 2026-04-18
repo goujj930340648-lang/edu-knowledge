@@ -17,12 +17,12 @@ sys.path.insert(0, str(project_root))
 
 from processor.vector_indexer import (
     vector_indexer_node,
-    _content_fingerprint,
-    _item_fingerprint,
-    _catalog_display_name,
-    _extract_catalog_items,
-    _truncate_content_field,
-    _sanitize_milvus_row,
+    content_fingerprint,
+    item_fingerprint,
+    catalog_display_name,
+    extract_catalog_items,
+    truncate_content_field,
+    sanitize_milvus_row,
     MILVUS_VARCHAR_CONTENT_MAX,
 )
 from processor.import_state import ImportGraphState
@@ -83,7 +83,7 @@ class TestVectorIndexerIntegration:
         monkeypatch.setenv("MILVUS_RAG_MODE", "legacy")
 
         # Mock existing hashes
-        existing_hash = _content_fingerprint(
+        existing_hash = content_fingerprint(
             EduContent.model_validate(sample_import_state["chunks"][0]["edu_content"])
         )
         mock_milvus_client.fetch_existing_in_field.return_value = {existing_hash}
@@ -320,27 +320,27 @@ class TestVectorIndexerHelpers:
         )
         content = EduContent(content="Test content", metadata=meta)
 
-        fp1 = _content_fingerprint(content)
-        fp2 = _content_fingerprint(content)
+        fp1 = content_fingerprint(content)
+        fp2 = content_fingerprint(content)
 
         assert fp1 == fp2
         assert len(fp1) == 64  # SHA256 hex length
 
         # Different content should produce different fingerprint
         content2 = EduContent(content="Different content", metadata=meta)
-        fp3 = _content_fingerprint(content2)
+        fp3 = content_fingerprint(content2)
         assert fp1 != fp3
 
     def test_item_fingerprint(self):
         """Test item fingerprint generation."""
-        fp1 = _item_fingerprint("syllabus", "Course Name")
-        fp2 = _item_fingerprint("syllabus", "Course Name")
+        fp1 = item_fingerprint("syllabus", "Course Name")
+        fp2 = item_fingerprint("syllabus", "Course Name")
 
         assert fp1 == fp2
         assert len(fp1) == 64
 
         # Different items should produce different fingerprints
-        fp3 = _item_fingerprint("syllabus", "Different Course")
+        fp3 = item_fingerprint("syllabus", "Different Course")
         assert fp1 != fp3
 
     def test_catalog_display_name(self):
@@ -356,7 +356,7 @@ class TestVectorIndexerHelpers:
             page_number=1,
             content_type=ContentType.DOC_CHUNK,
         )
-        assert _catalog_display_name(meta1) == "Math 101"
+        assert catalog_display_name(meta1) == "Math 101"
 
         # Test without course_name (should use source_file stem)
         meta2 = ContentMetadata(
@@ -367,7 +367,7 @@ class TestVectorIndexerHelpers:
             page_number=1,
             content_type=ContentType.DOC_CHUNK,
         )
-        assert _catalog_display_name(meta2) == "physics_course"
+        assert catalog_display_name(meta2) == "physics_course"
 
     def test_extract_catalog_items(self):
         """Test catalog item extraction."""
@@ -409,7 +409,7 @@ class TestVectorIndexerHelpers:
         )
         documents.append(EduContent(content="Bank content", metadata=meta3))
 
-        items = _extract_catalog_items(documents)
+        items = extract_catalog_items(documents)
 
         assert len(items) == 3
         assert items[0]["item_type"] == "syllabus"
@@ -423,14 +423,14 @@ class TestVectorIndexerHelpers:
         """Test content field truncation."""
         # Content within limit
         row1 = {"content": "Short content", "other": "data"}
-        result1, truncated1 = _truncate_content_field(row1)
+        result1, truncated1 = truncate_content_field(row1)
         assert not truncated1
         assert result1 == row1
 
         # Content exceeding limit
         long_content = "A" * (MILVUS_VARCHAR_CONTENT_MAX + 100)
         row2 = {"content": long_content, "other": "data"}
-        result2, truncated2 = _truncate_content_field(row2)
+        result2, truncated2 = truncate_content_field(row2)
         assert truncated2
         assert len(result2["content"]) == MILVUS_VARCHAR_CONTENT_MAX
         assert result2["other"] == "data"
@@ -447,7 +447,7 @@ class TestVectorIndexerHelpers:
             "none_value": None,
         }
 
-        result = _sanitize_milvus_row(row)
+        result = sanitize_milvus_row(row)
 
         assert result["content"] == "Test content"
         assert result["vector"] == [0.1, 0.2, 0.3]
