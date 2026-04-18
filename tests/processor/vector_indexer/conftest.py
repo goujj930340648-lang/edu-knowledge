@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 
 @pytest.fixture
-def mock_env_vars():
+def mock_env_vars(monkeypatch):
     """Mock environment variables for testing."""
     env_vars = {
         "MILVUS_COLLECTION": "test_vectors",
@@ -21,8 +21,9 @@ def mock_env_vars():
         "MILVUS_SKIP_DEDUP": "0",
         "EMBEDDING_BACKEND": "mock",
     }
-    with patch.dict(os.environ, env_vars, clear=False):
-        yield env_vars
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
+    return env_vars
 
 
 @pytest.fixture
@@ -42,12 +43,25 @@ def mock_embedding_client():
 def mock_local_bge_client():
     """Mock local BGE client."""
     mock_client = MagicMock()
-    mock_client.embed_documents_dense_only.return_value = [[0.1, 0.2, 0.3] for _ in range(5)]
-    mock_client.embed_documents_dense_sparse.return_value = (
-        [[0.1, 0.2, 0.3] for _ in range(5)],  # dense
-        [{0: 0.5, 1: 0.3} for _ in range(5)],  # sparse
-    )
-    mock_client.embed_items_dense.return_value = [[0.4, 0.5, 0.6] for _ in range(3)]
+
+    def embed_documents_dense_only_func(texts):
+        # Return the same number of vectors as input texts
+        return [[0.1, 0.2, 0.3] for _ in range(len(texts))]
+
+    def embed_documents_dense_sparse_func(texts):
+        # Return the same number of vectors as input texts
+        return (
+            [[0.1, 0.2, 0.3] for _ in range(len(texts))],  # dense
+            [{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # sparse
+        )
+
+    def embed_items_dense_func(texts):
+        # Return the same number of vectors as input texts
+        return [[0.4, 0.5, 0.6] for _ in range(len(texts))]
+
+    mock_client.embed_documents_dense_only.side_effect = embed_documents_dense_only_func
+    mock_client.embed_documents_dense_sparse.side_effect = embed_documents_dense_sparse_func
+    mock_client.embed_items_dense.side_effect = embed_items_dense_func
     mock_client.should_use_local_bge_embedding.return_value = False
     return mock_client
 

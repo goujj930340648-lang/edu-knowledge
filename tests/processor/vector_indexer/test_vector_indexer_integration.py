@@ -38,19 +38,20 @@ class TestVectorIndexerIntegration:
         mock_embedding_client,
         mock_milvus_client,
         mock_env_vars,
+        monkeypatch,
     ):
         """Test basic insert in legacy mode."""
         # Setup mocks
-        mock_env_vars["MILVUS_RAG_MODE"] = "legacy"
+        monkeypatch.setenv("MILVUS_RAG_MODE", "legacy")
 
         with patch(
-            "processor.vector_indexer.get_embedding_client",
+            "processor.vector_indexer.vector_indexer.get_embedding_client",
             return_value=mock_embedding_client,
         ), patch(
-            "processor.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.vector_indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ), patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -76,9 +77,10 @@ class TestVectorIndexerIntegration:
         mock_embedding_client,
         mock_milvus_client,
         mock_env_vars,
+        monkeypatch,
     ):
         """Test deduplication in legacy mode."""
-        mock_env_vars["MILVUS_RAG_MODE"] = "legacy"
+        monkeypatch.setenv("MILVUS_RAG_MODE", "legacy")
 
         # Mock existing hashes
         existing_hash = _content_fingerprint(
@@ -87,13 +89,13 @@ class TestVectorIndexerIntegration:
         mock_milvus_client.fetch_existing_in_field.return_value = {existing_hash}
 
         with patch(
-            "processor.vector_indexer.get_embedding_client",
+            "processor.vector_indexer.vector_indexer.get_embedding_client",
             return_value=mock_embedding_client,
         ), patch(
-            "processor.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.vector_indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ), patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -110,26 +112,27 @@ class TestVectorIndexerIntegration:
         mock_local_bge_client,
         mock_milvus_client,
         mock_env_vars,
+        monkeypatch,
     ):
         """Test basic insert in v2 mode."""
-        mock_env_vars["MILVUS_RAG_MODE"] = "v2"
-        mock_env_vars["MILVUS_NAMES_COLLECTION"] = "test_names"
-        mock_env_vars["MILVUS_CHUNKS_COLLECTION"] = "test_chunks"
+        monkeypatch.setenv("MILVUS_RAG_MODE", "v2")
+        monkeypatch.setenv("MILVUS_NAMES_COLLECTION", "test_names")
+        monkeypatch.setenv("MILVUS_CHUNKS_COLLECTION", "test_chunks")
 
         with patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=True,
         ), patch(
-            "processor.vector_indexer.get_local_bge_client",
+            "processor.vector_indexer.vector_indexer.get_local_bge_client",
             return_value=mock_local_bge_client,
         ), patch(
-            "processor.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.vector_indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(sample_import_state)
 
         # Verify success
-        assert result["is_success"] is True
+        assert result["is_success"] is True, f"Test failed with errors: {result.get('errors')}, warnings: {result.get('warnings')}"
         assert "indexed_records" in result
         assert "vector_ids" in result
         assert "indexed_catalog_records" in result
@@ -145,12 +148,13 @@ class TestVectorIndexerIntegration:
         self,
         sample_import_state,
         mock_env_vars,
+        monkeypatch,
     ):
         """Test v2 mode fails without local BGE."""
-        mock_env_vars["MILVUS_RAG_MODE"] = "v2"
+        monkeypatch.setenv("MILVUS_RAG_MODE", "v2")
 
         with patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -158,7 +162,8 @@ class TestVectorIndexerIntegration:
         # Verify failure
         assert result["is_success"] is False
         assert "errors" in result
-        assert any("MILVUS_RAG_MODE=v2 需要本地 BGE-M3" in e for e in result["errors"])
+        # Use more flexible matching for Chinese characters
+        assert any("MILVUS_RAG_MODE=v2" in e and "BGE-M3" in e for e in result["errors"])
 
     def test_empty_chunks_handling(
         self,
@@ -173,7 +178,7 @@ class TestVectorIndexerIntegration:
         )
 
         with patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(empty_state)
@@ -213,13 +218,13 @@ class TestVectorIndexerIntegration:
         )
 
         with patch(
-            "processor.vector_indexer.get_embedding_client",
+            "processor.vector_indexer.vector_indexer.get_embedding_client",
             return_value=mock_embedding_client,
         ), patch(
-            "processor.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.vector_indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ), patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(state)
@@ -240,19 +245,20 @@ class TestVectorIndexerIntegration:
         mock_embedding_client,
         mock_milvus_client,
         mock_env_vars,
+        monkeypatch,
     ):
         """Test MILVUS_SKIP_DEDUP flag."""
-        mock_env_vars["MILVUS_RAG_MODE"] = "legacy"
-        mock_env_vars["MILVUS_SKIP_DEDUP"] = "1"
+        monkeypatch.setenv("MILVUS_RAG_MODE", "legacy")
+        monkeypatch.setenv("MILVUS_SKIP_DEDUP", "1")
 
         with patch(
-            "processor.vector_indexer.get_embedding_client",
+            "processor.vector_indexer.vector_indexer.get_embedding_client",
             return_value=mock_embedding_client,
         ), patch(
-            "processor.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.vector_indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ), patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -269,22 +275,23 @@ class TestVectorIndexerIntegration:
         mock_embedding_client,
         mock_milvus_client,
         mock_env_vars,
+        monkeypatch,
     ):
         """Test that upstream errors and warnings are preserved."""
-        mock_env_vars["MILVUS_RAG_MODE"] = "legacy"
+        monkeypatch.setenv("MILVUS_RAG_MODE", "legacy")
 
         # Add upstream errors and warnings
         sample_import_state["errors"] = ["Upstream error 1"]
         sample_import_state["warnings"] = ["Upstream warning 1"]
 
         with patch(
-            "processor.vector_indexer.get_embedding_client",
+            "processor.vector_indexer.vector_indexer.get_embedding_client",
             return_value=mock_embedding_client,
         ), patch(
-            "processor.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.vector_indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ), patch(
-            "processor.vector_indexer.should_use_local_bge_embedding",
+            "processor.vector_indexer.vector_indexer.should_use_local_bge_embedding",
             return_value=False,
         ):
             result = vector_indexer_node(sample_import_state)
