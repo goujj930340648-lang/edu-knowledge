@@ -1,0 +1,6 @@
+test_id	prompt_category	prompt_text	with_skill_baseline	with_score	baseline_score	improvement	eval_mode	notes	created_at
+1	knowledge_extraction	帮我提取这个项目的知识地图，我需要快速了解整体架构	生成包含项目总览、关键文件清单、核心函数/类表格、依赖关系、架构决策、可复用组件的完整 Markdown 文档	9	6	3	dry_run	Skill 显著提升了输出的结构化和完整性，从简单目录列表升级为完整的知识地图文档	2026-04-18
+2	knowledge_extraction	我刚接手这个 edu-knowledge 项目（目录里包含很多第三方依赖和构建产物），给我生成一份代码库知识地图，记得排除掉无关的干扰信息	针对教育知识库项目，自动过滤 node_modules、venv、__pycache__ 等干扰，提取 FastAPI 应用、LangGraph 管线、向量索引等核心组件的结构化文档	9	5	4	dry_run	Skill 的"遍历源码文件"指令隐含了过滤逻辑，显著提升了抗干扰能力	2026-04-18
+3	knowledge_extraction	分析一下这个代码库，找出所有可复用的组件和工具函数	重点输出第6部分「可复用组件推荐」，识别 adapters、extractors、nodes 等模块的通用模式，建议哪些可以抽成公共库	8	5	3	dry_run	Skill 的第 6 部分明确指令使输出更聚焦、更实用	2026-04-18
+4	checkpoint_mechanism	这个项目非常庞大，包含数千个源文件。我不想看全部细节，请先给我一个最高层级的架构概览，并列出你认为最关键的 3 个核心模块，等我确认后再深入分析	验证检查点机制：先输出 Top-level 视图（项目总览 + 核心模块Top3），然后暂停询问用户是否需要深入某个模块，而不是一股脑输出几千行文件清单	9	6	3	dry_run	Skill 的检查点指令显著提升了大规模项目的交互体验	2026-04-18
+5	robustness	提取这个目录的知识地图	鲁棒性测试：如果当前目录只有 README 和配置文件而无核心源码，模型应明确提示「未发现核心源码文件，请确认目录或提供更多上下文」，不应编造架构	8	5	3	dry_run	Skill 的扫描指令隐含了"必须有源码才能生成地图"的逻辑，提升了鲁棒性	2026-04-18
