@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>对话检索 · EduKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e1a;
+      --bg-sidebar: rgba(10, 15, 30, 0.95);
+      --bg-card: rgba(15, 25, 45, 0.7);
+      --bg-input: rgba(5, 10, 20, 0.8);
+      --text-primary: #ffffff;
+      --text-secondary: #8b9dc3;
+      --accent-cyan: #00d4ff;
+      --accent-blue: #0099ff;
+      --border-glow: rgba(0, 212, 255, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @keyframes gridScan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { border-color: rgba(0, 212, 255, 0.3); }
+      50% { border-color: rgba(0, 212, 255, 0.8); }
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Grid Background */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    .grid-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      animation: gridScan 8s linear infinite;
+      opacity: 0.5;
+    }
+
+    /* Layout */
+    .layout {
+      display: flex;
+      height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Sidebar */
+    aside {
+      width: 320px;
+      flex-shrink: 0;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--glass-border);
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(20px);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    aside::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    aside::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    aside::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    aside h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      margin: 0 0 12px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    aside .muted {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    aside .muted code {
+      background: rgba(0, 212, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+    }
+
+    /* History List */
+    #histList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    #histList li {
+      padding: 12px 10px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    #histList li:hover {
+      border-color: var(--border-glow);
+      background: rgba(0, 212, 255, 0.05);
+      transform: translateX(5px);
+    }
+
+    #histList .role {
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    #histList .snippet {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+      min-width: 0;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    main::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    main::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    main::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      margin: 0 0 16px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--text-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    p code {
+      background: rgba(0, 212, 255, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Forms */
+    label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin: 16px 0 8px;
+      font-weight: 500;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    /* Row */
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    button {
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: var(--bg-dark);
+      font-weight: 700;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Checkbox */
+    label.checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      margin: 12px 0;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    /* Citations */
+    #cites {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(0, 212, 255, 0.05);
+      border-radius: 16px;
+      border: 1px dashed var(--border-glow);
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    #cites.visible {
+      display: block;
+    }
+
+    #cites strong {
+      color: var(--accent-cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    #cites .cite-line {
+      margin: 10px 0;
+      padding: 12px;
+      padding-left: 16px;
+      border-left: 3px solid var(--accent-cyan);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 0 8px 8px 0;
+      line-height: 1.6;
+    }
+
+    /* Output */
+    #out {
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      white-space: pre-wrap;
+      min-height: 150px;
+      max-height: 500px;
+      overflow-y: auto;
+      line-height: 1.8;
+      font-size: 1rem;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    #out::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #out::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    #out::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    /* Meta */
+    .meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Back Link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: var(--text-primary);
+      transform: translateX(-5px);
+    }
+
+    /* Status Bar */
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+      background-size: 200% 100%;
+      animation: gradientMove 3s linear infinite;
+      z-index: 1000;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      aside { width: 100%; height: auto; max-height: 40vh; }
+      main { padding: 20px; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <div class="layout">
+    <aside>
+      <a href="/front/index.html" class="back-link">← 返回首页</a>
+      <h2>历史记录</h2>
+      <p class="muted">与下方 session_id 一致时，点击「加载历史」拉取 <code>GET /chat/history/{session_id}</code></p>
+
+      <label for="session">session_id</label>
+      <input id="session" type="text" placeholder="留空则首次发送后自动填入" />
+      <div class="row">
+        <button type="button" class="secondary" id="btnHist">加载历史</button>
+      </div>
+      <ul id="histList"></ul>
+    </aside>
+
+    <main>
+      <h1>对话检索</h1>
+      <p>流式时 SSE 可能先推送 <code>citations</code> 再推送正文。支持引用来源展示。</p>
+
+      <label for="apiKey">X-API-Key</label>
+      <input id="apiKey" type="password" autocomplete="off" placeholder="可选" />
+
+      <label for="q">问题</label>
+      <textarea id="q" placeholder="例如：FastAPI 怎么做异步？（下轮可问：它有什么优缺点？）"></textarea>
+
+      <div class="row">
+        <label class="checkbox">
+          <input type="checkbox" id="stream" checked />
+          流式输出（SSE）
+        </label>
+        <button type="button" id="send">发送</button>
+      </div>
+
+      <div id="cites"></div>
+      <div id="meta" class="meta"></div>
+      <div id="out"></div>
+    </main>
+  </div>
+
+  <div class="status-bar"></div>
+
+  <script>
+    const out = document.getElementById('out');
+    const meta = document.getElementById('meta');
+    const cites = document.getElementById('cites');
+
+    function chatHeaders() {
+      const h = { 'Content-Type': 'application/json' };
+      const k = localStorage.getItem('EDU_API_KEY') || document.getElementById('apiKey').value.trim();
+      if (k) h['X-API-Key'] = k;
+      return h;
+    }
+    function authOnly() {
+      const h = {};
+      const k = localStorage.getItem('EDU_API_KEY') || document.getElementById('apiKey').value.trim();
+      if (k) h['X-API-Key'] = k;
+      return h;
+    }
+    (function prefill() {
+      const k = localStorage.getItem('EDU_API_KEY');
+      if (k) document.getElementById('apiKey').value = k;
+    })();
+
+    function renderCitations(items) {
+      if (!items || !items.length) {
+        cites.className = '';
+        cites.innerHTML = '';
+        return;
+      }
+      cites.className = 'visible';
+      cites.innerHTML = '<strong>参考来源（先达）</strong>' + items.map(function (c, i) {
+        var sf = (c.source_file || '') || ('chunk ' + (c.chunk_id || '').slice(0, 12));
+        var sn = (c.snippet || '').replace(/\s+/g, ' ').slice(0, 120);
+        var imgs = (c.image_urls && c.image_urls.length) ? '<br><span style="font-size:0.8rem; color: var(--accent-cyan);">图链: ' + c.image_urls.length + ' 个</span>' : '';
+        return '<div class="cite-line">' + (i + 1) + '. ' + sf + (sn ? ' — ' + sn + '…' : '') + imgs + '</div>';
+      }).join('');
+    }
+
+    document.getElementById('btnHist').onclick = async () => {
+      const sid = document.getElementById('session').value.trim();
+      const ul = document.getElementById('histList');
+      ul.innerHTML = '';
+      if (!sid) { alert('请先填写 session_id（发送过一轮后会自动有）'); return; }
+      try {
+        const r = await fetch('/chat/history/' + encodeURIComponent(sid) + '?limit=80', { headers: authOnly() });
+        const j = await r.json();
+        if (!r.ok) {
+          ul.innerHTML = '<li>加载失败 ' + r.status + '</li>';
+          return;
+        }
+        (j.messages || []).forEach(function (m) {
+          var li = document.createElement('li');
+          var role = (m.role || '');
+          var text = (m.content || '').replace(/\s+/g, ' ');
+          li.innerHTML = '<div class="role">' + role + '</div><div class="snippet">' + text.slice(0, 200) + (text.length > 200 ? '…' : '') + '</div>';
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        ul.innerHTML = '<li>' + String(e) + '</li>';
+      }
+    };
+
+    document.getElementById('send').onclick = async () => {
+      const query = document.getElementById('q').value.trim();
+      if (!query) return;
+      const session_id = document.getElementById('session').value.trim() || undefined;
+      const stream = document.getElementById('stream').checked;
+      out.textContent = '';
+      cites.className = '';
+      cites.innerHTML = '';
+      meta.textContent = '请求中…';
+
+      if (!stream) {
+        try {
+          const r = await fetch('/chat/query', {
+            method: 'POST',
+            headers: chatHeaders(),
+            body: JSON.stringify({ query, session_id, stream: false }),
+          });
+          const j = await r.json();
+          if (!r.ok) {
+            out.textContent = JSON.stringify(j, null, 2);
+            meta.textContent = 'HTTP ' + r.status;
+            return;
+          }
+          if (j.session_id && !document.getElementById('session').value.trim()) {
+            document.getElementById('session').value = j.session_id;
+          }
+          out.textContent = j.answer || JSON.stringify(j, null, 2);
+          if (j.citations && j.citations.length) renderCitations(j.citations);
+          meta.textContent = 'intent=' + (j.intent || '') + ' · task_id=' + (j.task_id || '');
+        } catch (e) {
+          out.textContent = String(e);
+          meta.textContent = '错误';
+        }
+        return;
+      }
+
+      try {
+        const r = await fetch('/chat/query', {
+          method: 'POST',
+          headers: chatHeaders(),
+          body: JSON.stringify({ query, session_id, stream: true }),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.task_id) {
+          out.textContent = JSON.stringify(j, null, 2);
+          meta.textContent = 'HTTP ' + r.status;
+          return;
+        }
+        if (j.session_id) document.getElementById('session').value = j.session_id;
+        meta.textContent = 'SSE task_id=' + j.task_id;
+
+        let streamUrl = '/chat/stream/' + encodeURIComponent(j.task_id);
+        const ak = localStorage.getItem('EDU_API_KEY') || document.getElementById('apiKey').value.trim();
+        if (ak) streamUrl += '?x_api_key=' + encodeURIComponent(ak);
+        const es = new EventSource(streamUrl);
+        let buf = '';
+        es.onmessage = (ev) => {
+          if (ev.data === '[DONE]') {
+            es.close();
+            meta.textContent += ' · 完成';
+            return;
+          }
+          try {
+            const o = JSON.parse(ev.data);
+            if (o.citations && Array.isArray(o.citations)) {
+              renderCitations(o.citations);
+              return;
+            }
+            if (o.text) buf += o.text;
+            if (o.error) buf += '\n【错误】' + o.error;
+            out.textContent = buf;
+          } catch {
+            out.textContent = buf + ev.data;
+          }
+        };
+        es.onerror = () => {
+          es.close();
+          meta.textContent += ' · EventSource 结束';
+        };
+      } catch (e) {
+        out.textContent = String(e);
+      }
+    };
+  </script>
+</body>
+</html>

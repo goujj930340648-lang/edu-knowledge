@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API 文档 · EduKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e1a;
+      --bg-card: rgba(15, 25, 45, 0.7);
+      --bg-code: rgba(5, 10, 20, 0.9);
+      --text-primary: #ffffff;
+      --text-secondary: #8b9dc3;
+      --accent-cyan: #00d4ff;
+      --accent-blue: #0099ff;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      --border-glow: rgba(0, 212, 255, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @keyframes gridScan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid Background */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    .grid-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      animation: gridScan 8s linear infinite;
+      opacity: 0.5;
+    }
+
+    /* Layout */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: rgba(10, 15, 30, 0.95);
+      border-right: 1px solid var(--glass-border);
+      padding: 24px;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .sidebar-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .back-link:hover {
+      color: var(--text-primary);
+      transform: translateX(-5px);
+    }
+
+    .sidebar-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--text-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      padding-left: 8px;
+    }
+
+    .nav-list {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent-cyan);
+      border-left: 3px solid var(--accent-cyan);
+    }
+
+    .nav-link .method {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .method.get { background: rgba(0, 212, 255, 0.2); color: var(--accent-cyan); }
+    .method.post { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      margin-left: 280px;
+      padding: 40px 48px;
+      max-width: 900px;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.2rem;
+      margin: 0 0 16px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--text-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    /* API Section */
+    .api-section {
+      margin-bottom: 48px;
+      scroll-margin-top: 40px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .section-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Endpoint Card */
+    .endpoint {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .endpoint:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.1);
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .endpoint-header:hover {
+      background: rgba(0, 212, 255, 0.05);
+    }
+
+    .endpoint-method {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .endpoint-method.get {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: var(--bg-dark);
+    }
+
+    .endpoint-method.post {
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      color: var(--bg-dark);
+    }
+
+    .endpoint-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    .endpoint-toggle {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      transition: transform 0.3s ease;
+    }
+
+    .endpoint.open .endpoint-toggle {
+      transform: rotate(180deg);
+    }
+
+    .endpoint-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .endpoint.open .endpoint-body {
+      max-height: 2000px;
+    }
+
+    .endpoint-content {
+      padding: 24px;
+    }
+
+    .endpoint-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* Parameters */
+    .param-section {
+      margin-bottom: 20px;
+    }
+
+    .param-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .param-table th,
+    .param-table td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .param-table th {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .param-table td {
+      font-size: 0.9rem;
+    }
+
+    .param-name {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+    }
+
+    .param-type {
+      color: var(--accent-purple);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    .param-required {
+      color: var(--accent-red);
+      font-size: 0.75rem;
+    }
+
+    .param-optional {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    /* Code Block */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .code-title {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+    }
+
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    pre::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    pre::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    pre::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    /* Try It Button */
+    .try-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: var(--bg-dark);
+      border: none;
+      border-radius: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .try-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    /* Status Bar */
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+      background-size: 200% 100%;
+      animation: gradientMove 3s linear infinite;
+      z-index: 1000;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main {
+        margin-left: 0;
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <div class="layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="/front/index.html" class="back-link">← 返回首页</a>
+        <div class="sidebar-title">API 文档</div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">数据导入</div>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('ingest-catalog')">
+              <span class="method post">POST</span>
+              <span>/ingest/catalog</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('ingest-catalog-upload')">
+              <span class="method post">POST</span>
+              <span>/ingest/catalog/upload</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('ingest-questions')">
+              <span class="method post">POST</span>
+              <span>/ingest/questions</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('ingest-documents')">
+              <span class="method post">POST</span>
+              <span>/ingest/documents</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('ingest-tasks')">
+              <span class="method get">GET</span>
+              <span>/ingest/tasks</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">智能检索</div>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('search-courses')">
+              <span class="method get">GET</span>
+              <span>/search/courses</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('search-questions')">
+              <span class="method get">GET</span>
+              <span>/search/questions</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('search-documents')">
+              <span class="method get">GET</span>
+              <span>/search/documents</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">对话检索</div>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('chat-query')">
+              <span class="method post">POST</span>
+              <span>/chat/query</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('chat-stream')">
+              <span class="method get">GET</span>
+              <span>/chat/stream</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('chat-history')">
+              <span class="method get">GET</span>
+              <span>/chat/history</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">系统</div>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a class="nav-link" onclick="scrollToSection('health')">
+              <span class="method get">GET</span>
+              <span>/health</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <h1>API 参考文档</h1>
+      <p class="subtitle">EduKnowledge 教育知识库系统完整 API 接口说明。所有接口均支持 X-API-Key 鉴权（如服务端配置）。</p>
+
+      <!-- Ingest APIs -->
+      <section class="api-section" id="ingest">
+        <div class="section-header">
+          <div class="section-icon">📥</div>
+          <div>
+            <div class="section-title">数据导入</div>
+            <div class="section-desc">批量导入课程目录、题库和文档资料</div>
+          </div>
+        </div>
+
+        <!-- Ingest Catalog -->
+        <div class="endpoint" id="ingest-catalog">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/ingest/catalog</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">导入课程目录 Markdown 文件。支持本地文件路径（服务端可读）。</p>
+
+              <div class="param-section">
+                <div class="param-title">请求体</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">file_path</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>课程介绍.md 的绝对或相对路径</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-title">请求示例</span>
+                  <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <pre>{
+  "file_path": "E:\\data\\课程介绍.md"
+}</pre>
+              </div>
+
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-title">响应示例 (202 Accepted)</span>
+                </div>
+                <pre>{
+  "task_id": "550e8400-e29b-41d4-a716-446655440000"
+}</pre>
+              </div>
+
+              <a href="/front/import.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingest Catalog Upload -->
+        <div class="endpoint" id="ingest-catalog-upload">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/ingest/catalog/upload</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">浏览器直接上传课程目录文件（Multipart/form-data），无需服务端磁盘路径。</p>
+
+              <div class="param-section">
+                <div class="param-title">请求参数</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">file</td>
+                    <td class="param-type">file</td>
+                    <td class="param-required">必填</td>
+                    <td>.md 或 .markdown 文件</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/import.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingest Questions -->
+        <div class="endpoint" id="ingest-questions">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/ingest/questions</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">导入题库 Markdown 文件。</p>
+
+              <div class="param-section">
+                <div class="param-title">请求体</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">file_path</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>题目资料.md 路径</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/import.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingest Documents -->
+        <div class="endpoint" id="ingest-documents">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/ingest/documents</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">批量导入文档（.md / .docx），支持多文件路径。</p>
+
+              <div class="param-section">
+                <div class="param-title">请求体</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">file_paths</td>
+                    <td class="param-type">string[]</td>
+                    <td class="param-required">必填</td>
+                    <td>文件路径数组</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">doc_type</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>course_doc 或 project_doc</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/import.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Get Task -->
+        <div class="endpoint" id="ingest-tasks">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/ingest/tasks/{task_id}</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">查询导入任务状态和进度。</p>
+
+              <div class="param-section">
+                <div class="param-title">路径参数</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">task_id</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>任务 ID</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/import.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Search APIs -->
+      <section class="api-section" id="search">
+        <div class="section-header">
+          <div class="section-icon">🔍</div>
+          <div>
+            <div class="section-title">智能检索</div>
+            <div class="section-desc">多维度搜索课程、题目和文档</div>
+          </div>
+        </div>
+
+        <!-- Search Courses -->
+        <div class="endpoint" id="search-courses">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/search/courses</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">搜索课程系列。</p>
+
+              <div class="param-section">
+                <div class="param-title">查询参数</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">keyword</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>课程名或关键词</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">limit</td>
+                    <td class="param-type">int</td>
+                    <td class="param-optional">可选</td>
+                    <td>返回数量 (1-200)，默认 50</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">include_modules</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>是否包含模块详情</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/search.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Questions -->
+        <div class="endpoint" id="search-questions">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/search/questions</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">搜索题库。</p>
+
+              <div class="param-section">
+                <div class="param-title">查询参数</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">keyword</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>题干或知识点</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">bank_code</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>题库编码过滤</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">question_type</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>题型过滤</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">quality_flags_only</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>仅看异常题目</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">limit</td>
+                    <td class="param-type">int</td>
+                    <td class="param-optional">可选</td>
+                    <td>返回数量 (1-200)，默认 50</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/search.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Documents -->
+        <div class="endpoint" id="search-documents">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/search/documents</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">语义向量检索文档（需 Milvus v2）。</p>
+
+              <div class="param-section">
+                <div class="param-title">查询参数</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">q</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>自然语言查询</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">doc_type</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>course_doc / project_doc</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">limit</td>
+                    <td class="param-type">int</td>
+                    <td class="param-optional">可选</td>
+                    <td>返回数量 (1-50)，默认 10</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">hydrate</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>Mongo 回表，默认 true</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">hyde</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>HyDE + RRF（需 LLM）</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">rerank</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>BGE 精排 + 悬崖截断</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">retrieval_meta</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>返回检索元信息</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/search.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat APIs -->
+      <section class="api-section" id="chat">
+        <div class="section-header">
+          <div class="section-icon">💬</div>
+          <div>
+            <div class="section-title">对话检索</div>
+            <div class="section-desc">AI 驱动的自然语言对话查询</div>
+          </div>
+        </div>
+
+        <!-- Chat Query -->
+        <div class="endpoint" id="chat-query">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method post">POST</span>
+            <span class="endpoint-path">/chat/query</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">发送对话查询，支持流式/非流式模式。</p>
+
+              <div class="param-section">
+                <div class="param-title">请求体</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">query</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>用户问题</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">session_id</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>会话 ID（留空新建）</td>
+                  </tr>
+                  <tr>
+                    <td class="param-name">stream</td>
+                    <td class="param-type">bool</td>
+                    <td class="param-optional">可选</td>
+                    <td>流式输出，默认 false</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-title">流式响应 (SSE)</span>
+                </div>
+                <pre>data: {"citations": [...]}
+data: {"text": "回答内容..."}
+data: [DONE]</pre>
+              </div>
+
+              <a href="/front/chat.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Stream -->
+        <div class="endpoint" id="chat-stream">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/chat/stream/{task_id}</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">SSE 流式输出接口。EventSource 无法携带 Header，可通过 URL 参数传递 API Key。</p>
+
+              <div class="param-section">
+                <div class="param-title">路径参数</div>
+                <table class="param-table">
+                  <tr>
+                    <th>参数</th>
+                    <th>类型</th>
+                    <th>必填</th>
+                    <th>说明</th>
+                  </tr>
+                  <tr>
+                    <td class="param-name">task_id</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>流式任务 ID</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div class="param-section">
+                <div class="param-title">查询参数</div>
+                <table class="param-table">
+                  <tr>
+                    <td class="param-name">x_api_key</td>
+                    <td class="param-type">string</td>
+                    <td class="param-optional">可选</td>
+                    <td>API Key（URL 参数方式）</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/chat.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat History -->
+        <div class="endpoint" id="chat-history">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/chat/history/{session_id}</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">获取指定会话的历史消息记录。</p>
+
+              <div class="param-section">
+                <div class="param-title">路径参数</div>
+                <table class="param-table">
+                  <tr>
+                    <td class="param-name">session_id</td>
+                    <td class="param-type">string</td>
+                    <td class="param-required">必填</td>
+                    <td>会话 ID</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div class="param-section">
+                <div class="param-title">查询参数</div>
+                <table class="param-table">
+                  <tr>
+                    <td class="param-name">limit</td>
+                    <td class="param-type">int</td>
+                    <td class="param-optional">可选</td>
+                    <td>返回条数，默认 100</td>
+                  </tr>
+                </table>
+              </div>
+
+              <a href="/front/chat.html" class="try-btn">🚀 在线调试</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Health API -->
+      <section class="api-section" id="health">
+        <div class="section-header">
+          <div class="section-icon">🏥</div>
+          <div>
+            <div class="section-title">系统健康</div>
+            <div class="section-desc">服务状态监控</div>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header" onclick="toggleEndpoint(this)">
+            <span class="endpoint-method get">GET</span>
+            <span class="endpoint-path">/health</span>
+            <span class="endpoint-toggle">▼</span>
+          </div>
+          <div class="endpoint-body">
+            <div class="endpoint-content">
+              <p class="endpoint-desc">返回 MongoDB、Milvus、MinIO 等服务健康状态。</p>
+
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-title">响应示例</span>
+                </div>
+                <pre>{
+  "status": "ok",
+  "mongodb": { "ok": true, "error": null },
+  "milvus": { "configured": true, "ok": true, "error": null },
+  "minio": { "configured": false, "ok": null, "error": null }
+}</pre>
+              </div>
+
+              <a href="/front/health.html" class="try-btn">📊 可视化监控</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="status-bar"></div>
+
+  <script>
+    function toggleEndpoint(header) {
+      const endpoint = header.parentElement;
+      endpoint.classList.toggle('open');
+    }
+
+    function scrollToSection(id) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        // Open the endpoint
+        element.classList.add('open');
+      }
+    }
+
+    function copyCode(btn) {
+      const pre = btn.closest('.code-block').querySelector('pre');
+      const text = pre.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '已复制!';
+        setTimeout(() => btn.textContent = '复制', 2000);
+      });
+    }
+
+    // Open endpoint if hash in URL
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.classList.add('open');
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  </script>
+</body>
+</html>

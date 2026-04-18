@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>数据导入 · EduKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e1a;
+      --bg-card: rgba(15, 25, 45, 0.7);
+      --bg-input: rgba(5, 10, 20, 0.8);
+      --text-primary: #ffffff;
+      --text-secondary: #8b9dc3;
+      --accent-cyan: #00d4ff;
+      --accent-blue: #0099ff;
+      --border-glow: rgba(0, 212, 255, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @keyframes gridScan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid Background */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    .grid-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+      animation: gridScan 8s linear infinite;
+      opacity: 0.5;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      margin-bottom: 40px;
+      animation: slideIn 0.6s ease-out;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: var(--text-primary);
+      transform: translateX(-5px);
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      margin: 0 0 16px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--text-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .description {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 700px;
+    }
+
+    .description code {
+      background: rgba(0, 212, 255, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Section */
+    section {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+      animation: slideIn 0.6s ease-out backwards;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+
+    section:nth-child(2) { animation-delay: 0.05s; }
+    section:nth-child(3) { animation-delay: 0.1s; }
+    section:nth-child(4) { animation-delay: 0.15s; }
+    section:nth-child(5) { animation-delay: 0.2s; }
+    section:nth-child(6) { animation-delay: 0.25s; }
+    section:nth-child(7) { animation-delay: 0.3s; }
+    section:nth-child(8) { animation-delay: 0.35s; }
+    section:nth-child(9) { animation-delay: 0.4s; }
+    section:nth-child(10) { animation-delay: 0.45s; }
+
+    section:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+    }
+
+    section h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      margin: 0 0 20px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    section h2::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(180deg, var(--accent-cyan), var(--accent-blue));
+      border-radius: 2px;
+    }
+
+    section p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    section p code {
+      background: rgba(0, 212, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* Form Elements */
+    label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    textarea {
+      min-height: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+    }
+
+    input::placeholder, select::placeholder, textarea::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    select option {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+    }
+
+    /* File Input */
+    input[type="file"] {
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+
+    input[type="file"]::file-selector-button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent-cyan);
+      cursor: pointer;
+      margin-right: 12px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+      background: rgba(0, 212, 255, 0.2);
+    }
+
+    /* Row */
+    .row {
+      margin-bottom: 16px;
+    }
+
+    /* Buttons */
+    button {
+      padding: 14px 28px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: var(--bg-dark);
+      font-weight: 700;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
+      margin-left: 8px;
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Status */
+    .status {
+      font-size: 0.85rem;
+      margin-top: 12px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status.ok {
+      color: var(--success);
+    }
+
+    .status.err {
+      color: var(--error);
+    }
+
+    /* Pre */
+    pre {
+      background: var(--bg-input);
+      padding: 16px;
+      border-radius: 12px;
+      overflow: auto;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      max-height: 300px;
+      margin-top: 12px;
+      border: 1px solid var(--glass-border);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.5;
+    }
+
+    pre::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    pre::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    pre::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+      background-size: 200% 100%;
+      animation: gradientMove 3s linear infinite;
+      z-index: 1000;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { padding: 24px 16px 60px; }
+      h1 { font-size: 1.5rem; }
+      section { padding: 20px; }
+      button { width: 100%; margin-bottom: 8px; }
+      button.secondary { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <div class="container">
+    <div class="header">
+      <a href="/front/index.html" class="back-link">← 返回首页</a>
+      <h1>数据导入</h1>
+      <p class="description">接口为 <code>POST /ingest/*</code>，此处用浏览器 <code>fetch</code> 调用。路径须为本机 Python 进程可读的文件（建议使用绝对路径）。</p>
+    </div>
+
+    <section>
+      <h2>鉴权（可选）</h2>
+      <div class="row">
+        <label for="apiKey">X-API-Key（与 .env 中 API_KEYS 一致时填写）</label>
+        <input id="apiKey" type="password" autocomplete="off" placeholder="留空表示服务端未启用 API_KEYS" />
+      </div>
+      <button type="button" id="btnSaveKey">保存到本地</button>
+      <p id="keyStatus" class="status"></p>
+    </section>
+
+    <section>
+      <h2>课程目录</h2>
+      <div class="row">
+        <label for="catalogPath">课程介绍.md 路径</label>
+        <input id="catalogPath" type="text" placeholder="例如 E:\data\课程介绍.md" />
+      </div>
+      <button type="button" id="btnCatalog">提交导入</button>
+      <p id="catalogStatus" class="status"></p>
+      <pre id="catalogOut"></pre>
+    </section>
+
+    <section>
+      <h2>题库</h2>
+      <div class="row">
+        <label for="qPath">题目资料.md 路径</label>
+        <input id="qPath" type="text" placeholder="例如 E:\data\题目资料.md" />
+      </div>
+      <button type="button" id="btnQ">提交导入</button>
+      <p id="qStatus" class="status"></p>
+      <pre id="qOut"></pre>
+    </section>
+
+    <section>
+      <h2>文档（多路径）</h2>
+      <div class="row">
+        <label for="docPaths">每行一个 .docx / .md 绝对路径</label>
+        <textarea id="docPaths" placeholder="E:\data\课程文档\xxx.docx"></textarea>
+      </div>
+      <div class="row">
+        <label for="docType">doc_type</label>
+        <select id="docType">
+          <option value="course_doc">course_doc</option>
+          <option value="project_doc">project_doc</option>
+        </select>
+      </div>
+      <button type="button" id="btnDoc">提交导入</button>
+      <p id="docStatus" class="status"></p>
+      <pre id="docOut"></pre>
+    </section>
+
+    <section>
+      <h2>课程目录（浏览器上传）</h2>
+      <p>POST <code>/ingest/catalog/upload</code>，无需服务器磁盘路径。</p>
+      <input type="file" id="upCat" accept=".md,.markdown,.text" />
+      <button type="button" id="btnUpCat">上传并导入</button>
+      <p id="upCatStatus" class="status"></p>
+      <pre id="upCatOut"></pre>
+    </section>
+
+    <section>
+      <h2>题库（浏览器上传）</h2>
+      <input type="file" id="upQ" accept=".md,.markdown" />
+      <button type="button" id="btnUpQ">上传并导入</button>
+      <p id="upQStatus" class="status"></p>
+      <pre id="upQOut"></pre>
+    </section>
+
+    <section>
+      <h2>文档（多文件上传）</h2>
+      <input type="file" id="upDocs" multiple accept=".md,.markdown,.docx" />
+      <p>使用与上方相同的 doc_type。</p>
+      <button type="button" id="btnUpDocs">上传并导入</button>
+      <p id="upDocsStatus" class="status"></p>
+      <pre id="upDocsOut"></pre>
+    </section>
+
+    <section>
+      <h2>来源映射（人工补录）</h2>
+      <p>覆盖规则映射：<code>POST /ingest/source-mapping</code>。键为 <code>doc_id</code> + <code>source_file</code>。</p>
+      <div class="row">
+        <label for="mapDocId">doc_id</label>
+        <input id="mapDocId" type="text" placeholder="知识文档 UUID" />
+      </div>
+      <div class="row">
+        <label for="mapSourceFile">source_file（可与导入文件名一致）</label>
+        <input id="mapSourceFile" type="text" placeholder="例如 lecture.docx" />
+      </div>
+      <div class="row">
+        <label for="mapSeries">series_code（可选）</label>
+        <input id="mapSeries" type="text" placeholder="系列编码" />
+      </div>
+      <div class="row">
+        <label for="mapProject">project_name（可选）</label>
+        <input id="mapProject" type="text" placeholder="项目名称" />
+      </div>
+      <button type="button" id="btnMapSave">保存映射</button>
+      <button type="button" id="btnMapList" class="secondary">拉取列表</button>
+      <p id="mapStatus" class="status"></p>
+      <pre id="mapOut"></pre>
+    </section>
+
+    <section>
+      <h2>任务状态</h2>
+      <div class="row">
+        <label for="taskId">task_id</label>
+        <input id="taskId" type="text" placeholder="从上方返回 JSON 复制" />
+      </div>
+      <button type="button" id="btnPoll">查询状态</button>
+      <p id="pollStatus" class="status"></p>
+      <pre id="taskOut"></pre>
+    </section>
+  </div>
+
+  <div class="status-bar"></div>
+
+  <script>
+    function authOnly() {
+      const h = {};
+      const k = localStorage.getItem('EDU_API_KEY');
+      if (k) h['X-API-Key'] = k;
+      return h;
+    }
+    const api = (path, opts = {}) =>
+      fetch(path, {
+        ...opts,
+        headers: { 'Content-Type': 'application/json', ...authOnly(), ...(opts.headers || {}) },
+      });
+
+    document.getElementById('btnSaveKey').onclick = () => {
+      const v = document.getElementById('apiKey').value.trim();
+      if (v) localStorage.setItem('EDU_API_KEY', v); else localStorage.removeItem('EDU_API_KEY');
+      document.getElementById('keyStatus').textContent = v ? '已保存' : '已清除';
+      document.getElementById('keyStatus').className = 'status ok';
+    };
+    (function prefillKey() {
+      const k = localStorage.getItem('EDU_API_KEY');
+      if (k) document.getElementById('apiKey').value = k;
+    })();
+
+    async function pollTask(taskId, outEl, statusEl) {
+      if (!taskId) return;
+      statusEl.textContent = '查询中…';
+      statusEl.className = 'status';
+      try {
+        const r = await fetch('/ingest/tasks/' + encodeURIComponent(taskId), { headers: authOnly() });
+        const j = await r.json();
+        outEl.textContent = JSON.stringify(j, null, 2);
+        statusEl.textContent = r.ok ? 'ok' : ('HTTP ' + r.status);
+        statusEl.className = 'status ' + (r.ok ? 'ok' : 'err');
+      } catch (e) {
+        statusEl.textContent = String(e);
+        statusEl.className = 'status err';
+      }
+    }
+
+    document.getElementById('btnCatalog').onclick = async () => {
+      const file_path = document.getElementById('catalogPath').value.trim();
+      const st = document.getElementById('catalogStatus');
+      const out = document.getElementById('catalogOut');
+      st.textContent = '提交中…';
+      try {
+        const r = await api('/ingest/catalog', { method: 'POST', body: JSON.stringify({ file_path }) });
+        const j = await r.json();
+        out.textContent = JSON.stringify(j, null, 2);
+        st.textContent = r.ok ? '已受理 202' : ('失败 ' + r.status);
+        st.className = 'status ' + (r.ok ? 'ok' : 'err');
+        if (j.task_id) document.getElementById('taskId').value = j.task_id;
+      } catch (e) {
+        st.textContent = String(e);
+        st.className = 'status err';
+      }
+    };
+
+    document.getElementById('btnQ').onclick = async () => {
+      const file_path = document.getElementById('qPath').value.trim();
+      const st = document.getElementById('qStatus');
+      const out = document.getElementById('qOut');
+      st.textContent = '提交中…';
+      try {
+        const r = await api('/ingest/questions', { method: 'POST', body: JSON.stringify({ file_path }) });
+        const j = await r.json();
+        out.textContent = JSON.stringify(j, null, 2);
+        st.textContent = r.ok ? '已受理 202' : ('失败 ' + r.status);
+        st.className = 'status ' + (r.ok ? 'ok' : 'err');
+        if (j.task_id) document.getElementById('taskId').value = j.task_id;
+      } catch (e) {
+        st.textContent = String(e);
+        st.className = 'status err';
+      }
+    };
+
+    document.getElementById('btnDoc').onclick = async () => {
+      const raw = document.getElementById('docPaths').value.trim();
+      const file_paths = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      const doc_type = document.getElementById('docType').value;
+      const st = document.getElementById('docStatus');
+      const out = document.getElementById('docOut');
+      st.textContent = '提交中…';
+      try {
+        const r = await api('/ingest/documents', {
+          method: 'POST',
+          body: JSON.stringify({ file_paths, doc_type }),
+        });
+        const j = await r.json();
+        out.textContent = JSON.stringify(j, null, 2);
+        st.textContent = r.ok ? '已受理 202' : ('失败 ' + r.status);
+        st.className = 'status ' + (r.ok ? 'ok' : 'err');
+        if (j.task_id) document.getElementById('taskId').value = j.task_id;
+      } catch (e) {
+        st.textContent = String(e);
+        st.className = 'status err';
+      }
+    };
+
+    document.getElementById('btnPoll').onclick = () => {
+      const id = document.getElementById('taskId').value.trim();
+      pollTask(id, document.getElementById('taskOut'), document.getElementById('pollStatus'));
+    };
+
+    document.getElementById('btnMapSave').onclick = async () => {
+      const doc_id = document.getElementById('mapDocId').value.trim();
+      const source_file = document.getElementById('mapSourceFile').value.trim();
+      const series_code = document.getElementById('mapSeries').value.trim();
+      const project_name = document.getElementById('mapProject').value.trim();
+      const st = document.getElementById('mapStatus');
+      const out = document.getElementById('mapOut');
+      if (!doc_id) { alert('请填写 doc_id'); return; }
+      const row = { doc_id, source_file, mapping_type: 'manual' };
+      if (series_code) row.series_code = series_code;
+      if (project_name) row.project_name = project_name;
+      st.textContent = '提交中…';
+      try {
+        const r = await api('/ingest/source-mapping', {
+          method: 'POST',
+          body: JSON.stringify({ mappings: [row] }),
+        });
+        const j = await r.json();
+        out.textContent = JSON.stringify(j, null, 2);
+        st.textContent = r.ok ? '已保存' : ('失败 ' + r.status);
+        st.className = 'status ' + (r.ok ? 'ok' : 'err');
+      } catch (e) {
+        st.textContent = String(e);
+        st.className = 'status err';
+      }
+    };
+
+    document.getElementById('btnMapList').onclick = async () => {
+      const st = document.getElementById('mapStatus');
+      const out = document.getElementById('mapOut');
+      const doc_id = document.getElementById('mapDocId').value.trim();
+      st.textContent = '加载中…';
+      try {
+        let url = '/ingest/source-mapping?limit=100';
+        if (doc_id) url += '&doc_id=' + encodeURIComponent(doc_id);
+        const r = await fetch(url, { headers: authOnly() });
+        const j = await r.json();
+        out.textContent = JSON.stringify(j, null, 2);
+        st.textContent = r.ok ? 'ok' : ('HTTP ' + r.status);
+        st.className = 'status ' + (r.ok ? 'ok' : 'err');
+      } catch (e) {
+        st.textContent = String(e);
+        st.className = 'status err';
+      }
+    };
+
+    async function postMultipart(url, formData, statusEl, outEl) {
+      statusEl.textContent = '上传中…';
+      try {
+        const r = await fetch(url, { method: 'POST', headers: authOnly(), body: formData });
+        const j = await r.json();
+        outEl.textContent = JSON.stringify(j, null, 2);
+        statusEl.textContent = r.ok ? '已受理 202' : ('失败 ' + r.status);
+        statusEl.className = 'status ' + (r.ok ? 'ok' : 'err');
+        if (j.task_id) document.getElementById('taskId').value = j.task_id;
+      } catch (e) {
+        statusEl.textContent = String(e);
+        statusEl.className = 'status err';
+      }
+    }
+
+    document.getElementById('btnUpCat').onclick = () => {
+      const f = document.getElementById('upCat').files[0];
+      if (!f) { alert('请选择文件'); return; }
+      const fd = new FormData();
+      fd.append('file', f);
+      postMultipart('/ingest/catalog/upload', fd, document.getElementById('upCatStatus'), document.getElementById('upCatOut'));
+    };
+
+    document.getElementById('btnUpQ').onclick = () => {
+      const f = document.getElementById('upQ').files[0];
+      if (!f) { alert('请选择文件'); return; }
+      const fd = new FormData();
+      fd.append('file', f);
+      postMultipart('/ingest/questions/upload', fd, document.getElementById('upQStatus'), document.getElementById('upQOut'));
+    };
+
+    document.getElementById('btnUpDocs').onclick = () => {
+      const fs = document.getElementById('upDocs').files;
+      if (!fs || !fs.length) { alert('请选择至少一个文件'); return; }
+      const fd = new FormData();
+      fd.append('doc_type', document.getElementById('docType').value);
+      for (let i = 0; i < fs.length; i++) fd.append('files', fs[i]);
+      postMultipart('/ingest/documents/upload', fd, document.getElementById('upDocsStatus'), document.getElementById('upDocsOut'));
+    };
+  </script>
+</body>
+</html>

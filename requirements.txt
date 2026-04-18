@@ -1,0 +1,22 @@
+pydantic>=2.0,<3
+pydantic-settings>=2.0,<3
+typing_extensions>=4.8.0; python_version < "3.11"
+openai>=1.40.0,<2
+langgraph>=0.2.0
+pymilvus>=2.4.0,<3
+python-dotenv>=1.0.0,<2
+fastapi>=0.115.0,<1
+uvicorn[standard]>=0.30.0,<1
+pymongo>=4.6.0,<5
+minio>=7.2.0,<8
+
+# 可选：本地 BGE-M3（MILVUS_RAG_MODE=v2 + EMBEDDING_BACKEND=local_bge_m3）
+# FlagEmbedding>=1.2.0
+# torch  # 按环境选择 CPU / CUDA 轮子
+
+# Word → Markdown（file_router）
+python-docx>=1.1.0,<2
+
+# Markdown 切分（与 knowledge document_split_node 对齐）
+langchain-text-splitters>=0.2.0,<1
+beautifulsoup4>=4.12.0,<5
