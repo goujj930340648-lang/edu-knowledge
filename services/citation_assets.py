@@ -27,7 +27,7 @@ def enrich_citations_with_images(
     *,
     max_urls_per_citation: int = 5,
 ) -> list[dict[str, Any]]:
-    if not db or not citations:
+    if db is None or not citations:
         return citations
     out: list[dict[str, Any]] = []
     for c in citations:

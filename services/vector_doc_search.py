@@ -248,7 +248,7 @@ def search_documents_with_hydrate(
         catalog_hint=catalog_hint,
         use_rerank=use_rerank,
     )
-    if not db or not hits:
+    if db is None or not hits:
         return hits
     return _hydrate_milvus_hits(db, hits)
 
@@ -272,6 +272,6 @@ def search_documents_with_hydrate_meta(
         catalog_hint=catalog_hint,
         use_rerank=use_rerank,
     )
-    if not db:
+    if db is None:
         return {"hits": hits, "retrieval_meta": meta}
     return {"hits": _hydrate_milvus_hits(db, hits), "retrieval_meta": meta}
