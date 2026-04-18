@@ -36,12 +36,16 @@ class EmbeddingResult:
 
     Attributes:
         embeddings: List of embedding vectors (each is list of floats)
+        dense_vectors: List of dense vectors (same as embeddings for legacy mode)
+        sparse_vectors: List of sparse vectors (dict mapping indices to values)
         backend: Which backend generated the embeddings
         processing_time_ms: Time taken in milliseconds
 
     Example:
         >>> result = EmbeddingResult(
         ...     embeddings=[[0.1, 0.2], [0.3, 0.4]],
+        ...     dense_vectors=[[0.1, 0.2], [0.3, 0.4]],
+        ...     sparse_vectors=None,
         ...     backend=EmbeddingBackend.OPENAI,
         ...     processing_time_ms=150
         ... )
@@ -50,6 +54,8 @@ class EmbeddingResult:
     embeddings: list[list[float]]
     backend: EmbeddingBackend
     processing_time_ms: float
+    dense_vectors: list[list[float]] | None = None
+    sparse_vectors: list[dict[int, float]] | None = None
 
 
 @dataclass(frozen=True)
@@ -85,11 +91,17 @@ class EmbeddingService(Protocol):
     error handling via EmbeddingError returns.
     """
 
-    def embed_documents(self, texts: list[str]) -> EmbeddingResult | EmbeddingError:
+    def embed_documents(
+        self, texts: list[str], mode: str = "dense"
+    ) -> EmbeddingResult | EmbeddingError:
         """Generate embeddings for documents.
 
         Args:
             texts: List of text strings to embed
+            mode: Embedding mode - "dense" (default), "hybrid", or "dense_only"
+                  - "dense": Return dense vectors in embeddings field
+                  - "hybrid": Return both dense and sparse vectors (BGE-M3 only)
+                  - "dense_only": Alias for "dense"
 
         Returns:
             EmbeddingResult on success, EmbeddingError on failure
@@ -149,11 +161,14 @@ class OpenAIEmbeddingService:
         self._client = EmbeddingClient()
         self._backend = EmbeddingBackend.OPENAI
 
-    def embed_documents(self, texts: list[str]) -> EmbeddingResult | EmbeddingError:
+    def embed_documents(
+        self, texts: list[str], mode: str = "dense"
+    ) -> EmbeddingResult | EmbeddingError:
         """Generate embeddings using OpenAI-compatible API.
 
         Args:
             texts: List of text strings to embed
+            mode: Embedding mode (ignored for OpenAI, always dense)
 
         Returns:
             EmbeddingResult with embeddings or EmbeddingError on failure
@@ -174,6 +189,8 @@ class OpenAIEmbeddingService:
             embeddings = self._client.embed_documents(texts)
             return EmbeddingResult(
                 embeddings=embeddings,
+                dense_vectors=embeddings,  # Same for OpenAI
+                sparse_vectors=None,  # Not supported
                 backend=self._backend,
                 processing_time_ms=(time.time() - start_time) * 1000,
             )
@@ -239,16 +256,67 @@ class BGEM3EmbeddingService:
         self._client = LocalBGEClient()
         self._backend = EmbeddingBackend.BGE_M3
 
-    def embed_documents(self, texts: list[str]) -> EmbeddingResult | EmbeddingError:
-        """Generate dense-only embeddings for legacy mode.
+    def embed_documents(
+        self, texts: list[str], mode: str = "dense"
+    ) -> EmbeddingResult | EmbeddingError:
+        """Generate embeddings for legacy mode (dense-only).
+
+        Args:
+            texts: List of text strings to embed
+            mode: Embedding mode - "dense" (default), "hybrid", or "dense_only"
+
+        Returns:
+            EmbeddingResult with embeddings or EmbeddingError on failure
+        """
+        if mode == "hybrid":
+            # Call hybrid mode to get both dense and sparse
+            return self._embed_hybrid(texts)
+        else:
+            # Dense-only mode
+            return self.embed_dense_only(texts)
+
+    def _embed_hybrid(self, texts: list[str]) -> EmbeddingResult | EmbeddingError:
+        """Generate hybrid embeddings (dense + sparse) in a single call.
+
+        This is the key optimization for V2Indexer - one API call gets both vectors.
 
         Args:
             texts: List of text strings to embed
 
         Returns:
-            EmbeddingResult with dense embeddings or EmbeddingError on failure
+            EmbeddingResult with both dense_vectors and sparse_vectors populated
         """
-        return self.embed_dense_only(texts)
+        start_time = time.time()
+
+        # Validate input
+        validation_error = validate_embedding_input(texts)
+        if validation_error:
+            return EmbeddingError(
+                error_type="validation_error",
+                message=validation_error,
+                backend=self._backend,
+                processing_time_ms=(time.time() - start_time) * 1000,
+            )
+
+        try:
+            dense_vecs, sparse_vecs = self._client.embed_documents_dense_sparse(texts)
+            elapsed_ms = (time.time() - start_time) * 1000
+
+            return EmbeddingResult(
+                embeddings=dense_vecs,  # Primary embeddings field
+                dense_vectors=dense_vecs,  # Explicit dense field
+                sparse_vectors=sparse_vecs,  # Sparse field
+                backend=self._backend,
+                processing_time_ms=elapsed_ms,
+            )
+
+        except Exception as e:
+            return EmbeddingError(
+                error_type="model_error",
+                message=f"BGE-M3 hybrid embedding failed: {e}",
+                backend=self._backend,
+                processing_time_ms=(time.time() - start_time) * 1000,
+            )
 
     def embed_dense_only(self, texts: list[str]) -> EmbeddingResult | EmbeddingError:
         """Generate dense-only embeddings (for name tables or legacy mode).
@@ -275,6 +343,8 @@ class BGEM3EmbeddingService:
             embeddings = self._client.embed_items_dense(texts)
             return EmbeddingResult(
                 embeddings=embeddings,
+                dense_vectors=embeddings,  # Explicit dense field
+                sparse_vectors=None,  # No sparse vectors
                 backend=self._backend,
                 processing_time_ms=(time.time() - start_time) * 1000,
             )

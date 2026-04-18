@@ -33,10 +33,12 @@ def mock_embedding_service():
 
     mock_service = MagicMock()
 
-    def embed_documents_func(texts):
+    def embed_documents_func(texts, mode="dense"):
         # Return EmbeddingResult with the same number of vectors as input texts
         return EmbeddingResult(
             embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            dense_vectors=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            sparse_vectors=None,
             backend=EmbeddingBackend.OPENAI,
             processing_time_ms=100.0,
         )
@@ -45,6 +47,8 @@ def mock_embedding_service():
         # Return EmbeddingResult with the same number of vectors as input texts
         return EmbeddingResult(
             embeddings=[[0.4, 0.5, 0.6] for _ in range(len(texts))],
+            dense_vectors=[[0.4, 0.5, 0.6] for _ in range(len(texts))],
+            sparse_vectors=None,
             backend=EmbeddingBackend.OPENAI,
             processing_time_ms=100.0,
         )
@@ -53,11 +57,15 @@ def mock_embedding_service():
         # Return tuple of EmbeddingResult for dense and sparse
         dense = EmbeddingResult(
             embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            dense_vectors=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            sparse_vectors=None,
             backend=EmbeddingBackend.BGE_M3,
             processing_time_ms=150.0,
         )
         sparse = EmbeddingResult(
             embeddings=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
+            dense_vectors=None,
+            sparse_vectors=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
             backend=EmbeddingBackend.BGE_M3,
             processing_time_ms=150.0,
         )
@@ -76,18 +84,32 @@ def mock_bge_service():
 
     mock_service = MagicMock()
 
-    def embed_documents_func(texts):
-        # Return EmbeddingResult with the same number of vectors as input texts
-        return EmbeddingResult(
-            embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
-            backend=EmbeddingBackend.BGE_M3,
-            processing_time_ms=100.0,
-        )
+    def embed_documents_func(texts, mode="dense"):
+        if mode == "hybrid":
+            # Return EmbeddingResult with both dense and sparse
+            return EmbeddingResult(
+                embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+                dense_vectors=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+                sparse_vectors=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
+                backend=EmbeddingBackend.BGE_M3,
+                processing_time_ms=150.0,
+            )
+        else:
+            # Dense only
+            return EmbeddingResult(
+                embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+                dense_vectors=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+                sparse_vectors=None,
+                backend=EmbeddingBackend.BGE_M3,
+                processing_time_ms=100.0,
+            )
 
     def embed_dense_only_func(texts):
         # Return EmbeddingResult with the same number of vectors as input texts
         return EmbeddingResult(
             embeddings=[[0.4, 0.5, 0.6] for _ in range(len(texts))],
+            dense_vectors=[[0.4, 0.5, 0.6] for _ in range(len(texts))],
+            sparse_vectors=None,
             backend=EmbeddingBackend.BGE_M3,
             processing_time_ms=100.0,
         )
@@ -96,11 +118,15 @@ def mock_bge_service():
         # Return tuple of EmbeddingResult for dense and sparse
         dense = EmbeddingResult(
             embeddings=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            dense_vectors=[[0.1, 0.2, 0.3] for _ in range(len(texts))],
+            sparse_vectors=None,
             backend=EmbeddingBackend.BGE_M3,
             processing_time_ms=150.0,
         )
         sparse = EmbeddingResult(
             embeddings=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
+            dense_vectors=None,
+            sparse_vectors=[{0: 0.5, 1: 0.3} for _ in range(len(texts))],  # type: ignore
             backend=EmbeddingBackend.BGE_M3,
             processing_time_ms=150.0,
         )

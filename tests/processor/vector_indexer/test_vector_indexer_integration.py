@@ -45,10 +45,10 @@ class TestVectorIndexerIntegration:
         monkeypatch.setenv("MILVUS_RAG_MODE", "legacy")
 
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_embedding_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -86,10 +86,10 @@ class TestVectorIndexerIntegration:
         mock_milvus_client.fetch_existing_in_field.return_value = {existing_hash}
 
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_embedding_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -114,10 +114,10 @@ class TestVectorIndexerIntegration:
         monkeypatch.setenv("MILVUS_CHUNKS_COLLECTION", "test_chunks")
 
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_bge_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -129,8 +129,17 @@ class TestVectorIndexerIntegration:
         assert "indexed_catalog_records" in result
         assert "catalog_vector_ids" in result
 
-        # Verify BGE service was called for chunks
-        mock_bge_service.embed_dense_sparse.assert_called_once()
+        # Verify BGE service was called for chunks with hybrid mode
+        # Check that embed_documents was called with mode="hybrid"
+        assert mock_bge_service.embed_documents.call_count >= 1
+        # Find the hybrid call
+        hybrid_call = None
+        for call in mock_bge_service.embed_documents.call_args_list:
+            args, kwargs = call
+            if kwargs.get("mode") == "hybrid" or len(args) > 1:
+                hybrid_call = call
+                break
+        assert hybrid_call is not None, "No hybrid mode call found"
 
         # Verify Milvus insert was called twice (names + chunks)
         assert mock_milvus_client.insert.call_count == 2
@@ -147,10 +156,10 @@ class TestVectorIndexerIntegration:
 
         # Mock the embedding service to avoid actual API calls
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_bge_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=MagicMock(
                 fetch_existing_in_field=MagicMock(return_value=set()),
                 insert=MagicMock(return_value=MagicMock(primary_keys=[1, 2, 3])),
@@ -210,10 +219,10 @@ class TestVectorIndexerIntegration:
         )
 
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_embedding_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(state)
@@ -241,10 +250,10 @@ class TestVectorIndexerIntegration:
         monkeypatch.setenv("MILVUS_SKIP_DEDUP", "1")
 
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_embedding_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(sample_import_state)
@@ -271,10 +280,10 @@ class TestVectorIndexerIntegration:
         sample_import_state["warnings"] = ["Upstream warning 1"]
 
         with patch(
-            "processor.vector_indexer.vector_indexer.get_embedding_service",
+            "processor.vector_indexer.indexer.get_embedding_service",
             return_value=mock_embedding_service,
         ), patch(
-            "processor.vector_indexer.vector_indexer.get_milvus_client",
+            "processor.vector_indexer.indexer.get_milvus_client",
             return_value=mock_milvus_client,
         ):
             result = vector_indexer_node(sample_import_state)
