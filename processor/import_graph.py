@@ -10,12 +10,12 @@ from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from processor.content_classifier import content_classifier_node
+from processor.extractors.content_classifier import content_classifier_node
 from processor.file_router import file_router_node
 from processor.import_state import ImportGraphState
-from processor.lecture_extractor import lecture_extractor_node
-from processor.question_extractor import question_extractor_node
-from processor.syllabus_extractor import syllabus_extractor_node
+from processor.extractors.lecture_extractor import lecture_extractor_node
+from processor.extractors.question_extractor import question_extractor_node
+from processor.extractors.syllabus_extractor import syllabus_extractor_node
 from processor.vector_indexer import vector_indexer_node
 
 

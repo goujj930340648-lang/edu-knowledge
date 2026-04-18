@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from processor.query_process.base import BaseNode
+from processor.utils.base import BaseNode
 from processor.query_state import QueryGraphState
 
 

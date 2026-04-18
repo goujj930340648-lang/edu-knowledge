@@ -23,7 +23,7 @@ from typing import Any
 
 from schema.edu_content import EduContent
 
-from processor.vector_indexer.config import VectorIndexerConfig
+from config.vector_config import VectorIndexerConfig
 from processor.vector_indexer.embedding_service import (
     EmbeddingError,
     EmbeddingResult,

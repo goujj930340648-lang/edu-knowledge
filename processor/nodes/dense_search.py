@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from processor.query_process.base import BaseNode
-from processor.query_process.embed_util import embed_query_for_chunks
+from processor.utils.base import BaseNode
+from processor.utils.embed_util import embed_query_for_chunks
 from processor.query_state import QueryGraphState
 from utils.milvus_search_edu import course_name_filter_expr, dense_search_chunks_v2, rag_mode
 

@@ -56,7 +56,7 @@ def run_chat_sse_worker(
         return
 
     try:
-        from processor.query_process.main_graph import query_app
+        from processor.query_graph import query_app
         from utils.client import get_llm_client
 
         from services.citation_assets import enrich_citations_with_images

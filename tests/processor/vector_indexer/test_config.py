@@ -11,7 +11,7 @@ import sys
 
 sys.path.insert(0, str(project_root))
 
-from processor.vector_indexer.config import VectorIndexerConfig
+from config.vector_config import VectorIndexerConfig
 
 
 class TestVectorIndexerConfig:

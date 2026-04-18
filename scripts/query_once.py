@@ -59,7 +59,7 @@ def main() -> int:
     except ImportError:
         pass
 
-    from processor.query_process.main_graph import query_app
+    from processor.query_graph import query_app
 
     out = query_app.invoke({"user_query": q})
 

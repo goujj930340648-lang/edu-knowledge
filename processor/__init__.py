@@ -20,7 +20,7 @@ __all__ = [
 
 def __getattr__(name: str) -> Any:
     if name == "content_classifier_node":
-        from processor.content_classifier import content_classifier_node
+        from processor.extractors.content_classifier import content_classifier_node
 
         return content_classifier_node
     if name == "file_router_node":
@@ -28,15 +28,15 @@ def __getattr__(name: str) -> Any:
 
         return file_router_node
     if name == "lecture_extractor_node":
-        from processor.lecture_extractor import lecture_extractor_node
+        from processor.extractors.lecture_extractor import lecture_extractor_node
 
         return lecture_extractor_node
     if name == "question_extractor_node":
-        from processor.question_extractor import question_extractor_node
+        from processor.extractors.question_extractor import question_extractor_node
 
         return question_extractor_node
     if name == "syllabus_extractor_node":
-        from processor.syllabus_extractor import syllabus_extractor_node
+        from processor.extractors.syllabus_extractor import syllabus_extractor_node
 
         return syllabus_extractor_node
     if name == "vector_indexer_node":

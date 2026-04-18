@@ -19,7 +19,7 @@ from typing import Any
 from schema.edu_content import EduContent
 
 from processor.import_state import ImportGraphState
-from processor.vector_indexer.config import VectorIndexerConfig
+from config.vector_config import VectorIndexerConfig
 from processor.vector_indexer.indexer import (
     IndexerResult,
     create_indexer,

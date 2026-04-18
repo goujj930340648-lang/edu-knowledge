@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from config.settings import get_settings
-from parsers.catalog_md import parse_course_catalog
-from parsers.questions_md import parse_question_bank_file
+from processor.adapters.catalog_md import parse_course_catalog
+from processor.adapters.questions_md import parse_question_bank_file
 from storage.mongo_db import get_mongo_db
 from services.docx_image_upload import process_docx_images_for_import
 from services.source_mapping_rules import upsert_rule_source_mapping_for_file
@@ -122,7 +122,7 @@ def run_documents_import(
     sub_fail = 0
     try:
         from init_milvus import ensure_milvus_collections
-        from main_graph import build_import_graph
+        from processor.import_graph import build_import_graph
 
         ok_m, err_m = ensure_milvus_collections()
         if not ok_m:

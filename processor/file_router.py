@@ -14,7 +14,7 @@ from typing import Any, Optional
 
 from processor.import_state import ImportGraphState
 from schema.metadata import FileKind, FileRouterOutput, infer_file_kind_from_name
-from processor.pdf_magic import convert_pdf_to_markdown
+from processor.adapters.pdf_adapter import convert_pdf_to_markdown
 from utils.converter import word_to_markdown
 
 

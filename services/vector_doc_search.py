@@ -7,8 +7,8 @@ from typing import Any
 
 from pymongo.database import Database
 
-from processor.query_process.config import get_query_config
-from processor.query_process.embed_util import embed_query_for_chunks
+from config.query_config import get_query_config
+from processor.utils.embed_util import embed_query_for_chunks
 from storage.repository import get_chunks_by_content_hashes
 from utils.milvus_search_edu import (
     dense_search_legacy_chunks,
