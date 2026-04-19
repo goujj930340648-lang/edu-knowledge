@@ -18,16 +18,16 @@ except ImportError:
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from processor.query_process.base import BaseNode
-from processor.query_process.nodes.answer_output_node import AnswerOutputNode
-from processor.query_process.nodes.course_catalog_node import CourseCatalogNode
-from processor.query_process.nodes.dense_vector_search_node import DenseVectorSearchNode
-from processor.query_process.nodes.hybrid_vector_search_node import HybridVectorSearchNode
-from processor.query_process.nodes.hyde_vector_search_node import HyDeVectorSearchNode
-from processor.query_process.nodes.reranker_node import RerankerNode
-from processor.query_process.nodes.rrf_merge_node import RrfMergeNode
-from processor.query_process.nodes.query_rewrite_node import QueryRewriteNode
-from processor.query_process.nodes.sparse_vector_search_node import SparseVectorSearchNode
+from processor.utils.base import BaseNode
+from processor.nodes.answer import AnswerOutputNode
+from processor.nodes.course_catalog import CourseCatalogNode
+from processor.nodes.dense_search import DenseVectorSearchNode
+from processor.nodes.hybrid_search import HybridVectorSearchNode
+from processor.nodes.hyde_search import HyDeVectorSearchNode
+from processor.nodes.reranker import RerankerNode
+from processor.nodes.rrf_merge import RrfMergeNode
+from processor.nodes.query_rewrite import QueryRewriteNode
+from processor.nodes.sparse_search import SparseVectorSearchNode
 from processor.query_state import QueryGraphState
 from utils.milvus_search_edu import rag_mode
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from prompts.query_prompt import ANSWER_PROMPT
-from processor.query_process.base import BaseNode
+from processor.utils.base import BaseNode
 from processor.query_state import CitationRef, QueryGraphState
 from utils.client import get_llm_client
 

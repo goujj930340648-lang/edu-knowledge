@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from config.settings import get_settings
-from processor.docx_media import extract_docx_images
+from processor.adapters.docx_adapter import extract_docx_images
 from storage.minio_client import public_url_for_key, put_document_image
 
 

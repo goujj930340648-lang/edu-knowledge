@@ -85,7 +85,7 @@ def main() -> int:
 
     os.environ.setdefault("MILVUS_URI", os.environ.get("MILVUS_URL", "http://127.0.0.1:19530"))
 
-    from main_graph import build_import_graph
+    from processor.import_graph import build_import_graph
 
     initial: dict = {
         "job_id": str(uuid.uuid4()),

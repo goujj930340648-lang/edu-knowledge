@@ -6,8 +6,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
-from processor.query_process.config import QueryConfig, get_query_config
-from processor.query_process.exceptions import QueryProcessError
+from config.query_config import QueryConfig, get_query_config
+from processor.utils.exceptions import QueryProcessError
 
 T = TypeVar("T")
 

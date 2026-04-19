@@ -13,9 +13,9 @@
 
 ## 环境与配置
 
-1. 复制 `.env.example` 为 `.env`。
+1. 复制 `config/env.example` 为 `.env`。
 2. `PDF_IMPORT_ENABLED`：**预留**，默认 `false`；PDF 导入未实现前请勿依赖该开关行为。
 
 ## 目录骨架（占位）
 
-`api/`、`processor/`、`schema/`、`services/`、`utils/`、`prompts/`、`temp_data/` 等为后续代码预留；当前仅含 `.gitkeep`，无业务代码。
+`api/`、`processor/`（含nodes/、adapters/子目录）、`schema/`、`services/`、`utils/`、`config/`、`scripts/`、`prompts/`、`temp_data/` 等为后续代码预留；当前仅含 `.gitkeep`，无业务代码。

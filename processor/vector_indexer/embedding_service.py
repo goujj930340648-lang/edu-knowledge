@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol, runtime_checkable
 
-from processor.vector_indexer.config import VectorIndexerConfig
+from config.vector_config import VectorIndexerConfig
 
 
 class EmbeddingBackend(str, Enum):

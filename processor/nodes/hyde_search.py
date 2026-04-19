@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from prompts.query_prompt import HYDE_SYSTEM_TEMPLATE, HYDE_USER_TEMPLATE
-from processor.query_process.base import BaseNode
-from processor.query_process.embed_util import embed_query_for_chunks
+from processor.utils.base import BaseNode
+from processor.utils.embed_util import embed_query_for_chunks
 from processor.query_state import QueryGraphState
 from utils.client import get_llm_client
 from utils.milvus_search_edu import (

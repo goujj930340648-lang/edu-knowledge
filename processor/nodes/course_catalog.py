@@ -10,7 +10,7 @@ from json import JSONDecodeError
 from typing import Any
 
 from prompts.query_prompt import CATALOG_EXTRACT_SYSTEM, CATALOG_EXTRACT_USER
-from processor.query_process.base import BaseNode
+from processor.utils.base import BaseNode
 from processor.query_state import QueryGraphState
 from utils.client import get_llm_client
 from utils.local_bge_client import should_use_local_bge_embedding

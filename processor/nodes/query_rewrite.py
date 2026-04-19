@@ -6,7 +6,7 @@ import os
 from typing import Any
 
 from prompts.query_prompt import QUERY_REWRITE_SYSTEM, QUERY_REWRITE_USER
-from processor.query_process.base import BaseNode
+from processor.utils.base import BaseNode
 from processor.query_state import QueryGraphState
 from utils.client import get_llm_client
 

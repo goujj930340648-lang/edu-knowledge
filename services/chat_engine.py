@@ -229,7 +229,7 @@ def run_chat_sync(
         insert_chat_messages(db, sid, tid, user_query, out["answer"], citations=[], intent=intent)
         return out
 
-    from processor.query_process.main_graph import query_app
+    from processor.query_graph import query_app
 
     state: dict[str, Any] = {"user_query": user_query}
     if messages:

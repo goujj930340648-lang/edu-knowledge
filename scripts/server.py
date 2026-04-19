@@ -10,7 +10,8 @@ def main() -> None:
     try:
         from dotenv import load_dotenv
 
-        load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
+        # 与 config/settings.py、app/main.py 一致：始终加载项目根 .env（非 scripts/.env）
+        load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
     except ImportError:
         pass
 

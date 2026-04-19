@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import chat, health, ingest, search
+from app.routers import chat, ingest, search
 
 _WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
@@ -58,6 +58,7 @@ def custom_health():
 @app.get("/api/health")
 def health_api():
     from app.routers.health import health
+
     return health()
 
 
