@@ -11,12 +11,14 @@
 - ``BGE_FP16`` / ``BGE_M3_USE_FP16``：半精度开关（``1`` / ``true`` / ``True`` 等）。
 - ``BGE_M3_BATCH``：encode 批大小，默认 ``12``。
 - ``ITEM_NAME_DIAG``：设为 ``1`` 时在首次加载打印解析到的模型路径与设备（便于排查）。
+- ``BGE_M3_SKIP_LOAD_PATCH``：设为 ``1`` 时**不**打 ``AutoModel.from_pretrained`` 补丁（仅当你需自行排查与 transformers 的交互时）。
 
 依赖：``pip install FlagEmbedding torch``
 """
 
 from __future__ import annotations
 
+import inspect
 import os
 import threading
 from functools import lru_cache
@@ -38,6 +40,40 @@ def _encode_semaphore() -> threading.BoundedSemaphore:
         n = max(1, min(n, 64))
         _encode_sem = threading.BoundedSemaphore(n)
     return _encode_sem
+
+
+def _patch_auto_model_from_pretrained() -> None:
+    """
+    FlagEmbedding 的 BGE-M3 在 ``EncoderOnlyEmbedderM3Runner.get_model`` 里调用
+    ``AutoModel.from_pretrained``。若默认 ``low_cpu_mem_usage=True``（新版 transformers），
+    权重可能留在 meta device，随后 ``.to(cuda)`` 会报
+    ``Cannot copy out of meta tensor``。与 ``local_bge_reranker`` 中 SequenceClassification
+    补丁同理：在仍支持该参数时默认 ``low_cpu_mem_usage=False``，先在 CPU 上完整实例化再搬运。
+    """
+    if _parse_bool_env(("BGE_M3_SKIP_LOAD_PATCH",), default=False):
+        return
+    try:
+        from transformers import AutoModel
+    except ImportError:
+        return
+
+    if getattr(AutoModel, "_edu_bge_m3_from_pretrained_patched", False):
+        return
+
+    orig = AutoModel.from_pretrained.__func__
+
+    def _wrapped(cls: Any, *args: Any, **kwargs: Any) -> Any:
+        kwargs = dict(kwargs)
+        try:
+            sig = inspect.signature(orig)
+            if "low_cpu_mem_usage" in sig.parameters:
+                kwargs.setdefault("low_cpu_mem_usage", False)
+        except (TypeError, ValueError):
+            pass
+        return orig(cls, *args, **kwargs)
+
+    AutoModel.from_pretrained = classmethod(_wrapped)
+    setattr(AutoModel, "_edu_bge_m3_from_pretrained_patched", True)
 
 
 def _parse_bool_env(keys: tuple[str, ...], default: bool = False) -> bool:
@@ -120,6 +156,7 @@ class LocalBGEClient:
         if dev:
             kwargs["devices"] = dev
 
+        _patch_auto_model_from_pretrained()
         self._model = BGEM3FlagModel(name, **kwargs)
 
         if _parse_bool_env(("ITEM_NAME_DIAG",), default=False):

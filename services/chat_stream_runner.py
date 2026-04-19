@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.streaming import end_stream, push_citations_event, push_token
+from app.streaming import (
+    end_stream,
+    forget_stream,
+    push_citations_event,
+    push_token,
+    wait_for_sse_consumer,
+)
 from config.settings import get_settings
 from storage.mongo_db import get_mongo_db
 from storage.repository import insert_chat_messages
@@ -33,6 +39,12 @@ def run_chat_sse_worker(
     intent = classify_intent(user_query)
     tid = task_id
     sid = session_id
+
+    if not wait_for_sse_consumer(tid, timeout=60.0):
+        push_token(tid, "【错误】SSE 客户端未及时连接（流式订阅超时），请重试。")
+        end_stream(tid)
+        forget_stream(tid)
+        return
 
     if not uri:
         push_token(tid, "MongoDB 未配置，无法完成对话。")
